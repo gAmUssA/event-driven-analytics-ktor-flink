@@ -1,7 +1,7 @@
 services:
   # Kafka Init - required for KRaft mode
   kafka-init:
-    image: confluentinc/cp-kafka:7.8.0
+    image: confluentinc/cp-kafka:7.9.0
     container_name: kafka-init
     command: >
       bash -c "
@@ -17,7 +17,7 @@ services:
 
   # Kafka with KRaft mode (no Zookeeper)
   kafka:
-    image: confluentinc/cp-kafka:7.8.0
+    image: confluentinc/cp-kafka:7.9.0
     container_name: kafka
     depends_on:
       - kafka-init
@@ -57,7 +57,7 @@ services:
 
   # Schema Registry
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.8.0
+    image: confluentinc/cp-schema-registry:7.9.0
     container_name: schema-registry
     depends_on:
       - kafka
@@ -90,7 +90,7 @@ services:
 
   # Kafka Setup - creates topics
   kafka-setup:
-    image: confluentinc/cp-kafka:7.8.0
+    image: confluentinc/cp-kafka:7.9.0
     container_name: kafka-setup
     depends_on:
       - kafka
