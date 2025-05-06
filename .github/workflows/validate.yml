@@ -20,10 +20,10 @@ jobs:
 
       - name: Initialize Kafka for KRaft mode
         run: |
-          docker-compose up --exit-code-from kafka-init kafka-init
+          docker compose up --exit-code-from kafka-init kafka-init
 
       - name: Start services
-        run: docker-compose up -d
+        run: docker compose up -d
 
       - name: Wait for Kafka to be ready
         run: |
@@ -32,7 +32,7 @@ jobs:
           elapsed=0
           interval=10
 
-          until docker-compose exec -T kafka kafka-topics --bootstrap-server kafka:9092 --list > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+          until docker compose exec -T kafka kafka-topics --bootstrap-server kafka:9092 --list > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
             echo "Kafka not ready yet, waiting... ($elapsed/$timeout seconds)"
             sleep $interval
             elapsed=$((elapsed + interval))
@@ -40,7 +40,7 @@ jobs:
 
           if [ $elapsed -ge $timeout ]; then
             echo "Timeout waiting for Kafka to be ready"
-            docker-compose logs kafka
+            docker compose logs kafka
             exit 1
           fi
 
@@ -53,7 +53,7 @@ jobs:
           elapsed=0
           interval=10
 
-          until docker-compose exec -T trino-coordinator trino --execute "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+          until docker compose exec -T trino-coordinator trino --execute "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
             echo "Trino not ready yet, waiting... ($elapsed/$timeout seconds)"
             sleep $interval
             elapsed=$((elapsed + interval))
@@ -61,14 +61,14 @@ jobs:
 
           if [ $elapsed -ge $timeout ]; then
             echo "Timeout waiting for Trino to be ready"
-            docker-compose logs trino-coordinator
+            docker compose logs trino-coordinator
             exit 1
           fi
 
           echo "Trino is ready!"
 
       - name: Check service status
-        run: docker-compose ps
+        run: docker compose ps
 
       - name: Validate Trino
         run: |
@@ -76,8 +76,8 @@ jobs:
           ./scripts/validate-trino.sh
 
       - name: Check Kafka topics
-        run: docker-compose exec -T kafka kafka-topics --bootstrap-server kafka:9092 --list
+        run: docker compose exec -T kafka kafka-topics --bootstrap-server kafka:9092 --list
 
       - name: Stop services
         if: always()
-        run: docker-compose down
+        run: docker compose down

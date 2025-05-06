@@ -1,6 +1,6 @@
 # Real-Time Flight Tracking Demo
 
-[![Validate Stack](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/validate.yml/badge.svg)](https://github.com/yourusername/real-time-flight-tracking-demo/actions/workflows/validate.yml)
+[![Validate Stack](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/validate.yml/badge.svg)](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/validate.yml)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
 [![Kafka](https://img.shields.io/badge/Kafka-7.8.0-231F20?logo=apache-kafka)](https://kafka.apache.org/)
 [![Flink](https://img.shields.io/badge/Flink-1.17.1-E6526F?logo=apache-flink)](https://flink.apache.org/)
