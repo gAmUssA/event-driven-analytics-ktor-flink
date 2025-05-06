@@ -107,7 +107,7 @@ services:
 
   # Flink JobManager
   jobmanager:
-    image: apache/flink:1.17.1
+    image: apache/flink:2.0.0
     platform: linux/amd64
     container_name: jobmanager
     ports:
@@ -134,7 +134,7 @@ services:
 
   # Flink TaskManager
   taskmanager:
-    image: apache/flink:1.17.1
+    image: apache/flink:2.0.0
     platform: linux/amd64
     container_name: taskmanager
     depends_on:
@@ -186,7 +186,7 @@ services:
 
   # REST Catalog for Iceberg
   rest-catalog:
-    image: tabulario/iceberg-rest:0.6.0
+    image: tabulario/iceberg-rest:1.6.0
     container_name: rest-catalog
     ports:
       - "8181:8181"
@@ -208,7 +208,7 @@ services:
 
   # Trino coordinator
   trino-coordinator:
-    image: trinodb/trino:414
+    image: trinodb/trino:475
     platform: linux/amd64
     container_name: trino-coordinator
     depends_on:
