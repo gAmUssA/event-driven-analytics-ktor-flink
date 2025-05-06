@@ -160,7 +160,7 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
 
 ### 5.3 Flink Jobs
 
-- **Version**: Apache Flink 1.17+
+- **Version**: Apache Flink 1.20.1+
 - **Job 1: Stateless Processing**
   - Table API/SQL query for filtering and transformation
   - Input: Kafka topic `flights`

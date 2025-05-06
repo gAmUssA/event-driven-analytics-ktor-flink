@@ -4,7 +4,7 @@
 [![Build Generator](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/generator-build.yml/badge.svg)](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/generator-build.yml)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
 [![Kafka](https://img.shields.io/badge/Kafka-7.8.0-231F20?logo=apache-kafka)](https://kafka.apache.org/)
-[![Flink](https://img.shields.io/badge/Flink-1.17.1-E6526F?logo=apache-flink)](https://flink.apache.org/)
+[![Flink](https://img.shields.io/badge/Flink-1.20.1-E6526F?logo=apache-flink)](https://flink.apache.org/)
 [![Iceberg](https://img.shields.io/badge/Iceberg-latest-0B5394?logo=apache)](https://iceberg.apache.org/)
 [![Trino](https://img.shields.io/badge/Trino-414-DD00A1?logo=trino)](https://trino.io/)
 [![Ktor](https://img.shields.io/badge/Ktor-2.3+-E84B3C?logo=kotlin)](https://ktor.io/)
@@ -21,7 +21,7 @@ This project demonstrates real-time flight tracking using Apache Flink, Kotlin, 
 ## 🚀 Technologies
 
 - **Kafka**: Confluent Kafka 7.8.0 (KRaft mode without Zookeeper)
-- **Flink**: Apache Flink 1.17.1
+- **Flink**: Apache Flink 1.20.1
 - **Iceberg**: Apache Iceberg for data storage
 - **Trino**: For SQL querying of Iceberg tables
 - **Ktor**: Backend server with SSE and REST endpoints
