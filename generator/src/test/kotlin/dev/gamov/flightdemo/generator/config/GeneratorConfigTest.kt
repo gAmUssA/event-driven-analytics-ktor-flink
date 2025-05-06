@@ -31,6 +31,18 @@ class GeneratorConfigTest {
         assertEquals(16384, config.kafka.batchSize)
         assertEquals(1L, config.kafka.lingerMs)
         assertEquals(33554432L, config.kafka.bufferMemory)
+
+        // Confluent Cloud properties should be null by default
+        assertNull(config.kafka.securityProtocol)
+        assertNull(config.kafka.saslMechanism)
+        assertNull(config.kafka.saslJaasConfig)
+        assertNull(config.kafka.schemaRegistryBasicAuthCredentialsSource)
+        assertNull(config.kafka.schemaRegistryBasicAuthUserInfo)
+        assertNull(config.kafka.clientDnsLookup)
+        assertNull(config.kafka.sessionTimeoutMs)
+        assertNull(config.kafka.environment)
+        assertNull(config.kafka.apiKey)
+        assertNull(config.kafka.apiSecret)
     }
 
     @Test
@@ -46,7 +58,18 @@ class GeneratorConfigTest {
             retries = 5,
             batchSize = 32768,
             lingerMs = 2,
-            bufferMemory = 67108864
+            bufferMemory = 67108864,
+            // Confluent Cloud properties
+            securityProtocol = "SASL_SSL",
+            saslMechanism = "PLAIN",
+            saslJaasConfig = "org.apache.kafka.common.security.plain.PlainLoginModule required username='test-key' password='test-secret';",
+            schemaRegistryBasicAuthCredentialsSource = "USER_INFO",
+            schemaRegistryBasicAuthUserInfo = "test-sr-key:test-sr-secret",
+            clientDnsLookup = "use_all_dns_ips",
+            sessionTimeoutMs = 45000,
+            environment = "cloud",
+            apiKey = "test-flink-key",
+            apiSecret = "test-flink-secret"
         )
 
         val simulationConfig = SimulationConfig(
@@ -84,6 +107,18 @@ class GeneratorConfigTest {
         assertEquals(32768, config.kafka.batchSize)
         assertEquals(2L, config.kafka.lingerMs)
         assertEquals(67108864L, config.kafka.bufferMemory)
+
+        // Confluent Cloud properties
+        assertEquals("SASL_SSL", config.kafka.securityProtocol)
+        assertEquals("PLAIN", config.kafka.saslMechanism)
+        assertEquals("org.apache.kafka.common.security.plain.PlainLoginModule required username='test-key' password='test-secret';", config.kafka.saslJaasConfig)
+        assertEquals("USER_INFO", config.kafka.schemaRegistryBasicAuthCredentialsSource)
+        assertEquals("test-sr-key:test-sr-secret", config.kafka.schemaRegistryBasicAuthUserInfo)
+        assertEquals("use_all_dns_ips", config.kafka.clientDnsLookup)
+        assertEquals(45000, config.kafka.sessionTimeoutMs)
+        assertEquals("cloud", config.kafka.environment)
+        assertEquals("test-flink-key", config.kafka.apiKey)
+        assertEquals("test-flink-secret", config.kafka.apiSecret)
 
         // Simulation config
         assertEquals(50, config.simulation.numFlights)

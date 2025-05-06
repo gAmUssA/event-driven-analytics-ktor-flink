@@ -90,7 +90,18 @@ data class KafkaConfig(
     val retries: Int = 3,
     val batchSize: Int = 16384,
     val lingerMs: Long = 1,
-    val bufferMemory: Long = 33554432
+    val bufferMemory: Long = 33554432,
+    // Confluent Cloud specific properties
+    val securityProtocol: String? = null,
+    val saslMechanism: String? = null,
+    val saslJaasConfig: String? = null,
+    val schemaRegistryBasicAuthCredentialsSource: String? = null,
+    val schemaRegistryBasicAuthUserInfo: String? = null,
+    val clientDnsLookup: String? = null,
+    val sessionTimeoutMs: Int? = null,
+    val environment: String? = null,
+    val apiKey: String? = null,
+    val apiSecret: String? = null
 )
 
 /**

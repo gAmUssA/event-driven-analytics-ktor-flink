@@ -48,6 +48,26 @@ class FlightProducer(
             put(ProducerConfig.BATCH_SIZE_CONFIG, config.batchSize)
             put(ProducerConfig.LINGER_MS_CONFIG, config.lingerMs)
             put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.bufferMemory)
+
+            // Add Confluent Cloud specific properties if they are set
+            config.securityProtocol?.let { put("security.protocol", it) }
+            config.saslMechanism?.let { put("sasl.mechanism", it) }
+            config.saslJaasConfig?.let { put("sasl.jaas.config", it) }
+            config.schemaRegistryBasicAuthCredentialsSource?.let { 
+                put("schema.registry.basic.auth.credentials.source", it) 
+            }
+            config.schemaRegistryBasicAuthUserInfo?.let { 
+                put("schema.registry.basic.auth.user.info", it) 
+            }
+            config.clientDnsLookup?.let { put("client.dns.lookup", it) }
+            config.sessionTimeoutMs?.let { put("session.timeout.ms", it) }
+
+            // Optional environment property for Confluent Cloud
+            config.environment?.let { put("environment", it) }
+
+            // Optional API key and secret for Flink
+            config.apiKey?.let { put("flink.api.key", it) }
+            config.apiSecret?.let { put("flink.api.secret", it) }
         }
 
         return KafkaProducer(props)

@@ -11,6 +11,22 @@ kafka:
   lingerMs: 1
   bufferMemory: 33554432
 
+  # Confluent Cloud Configuration
+  # Uncomment and configure these properties when using Confluent Cloud
+  # Example configuration:
+  # securityProtocol: "SASL_SSL"
+  # saslMechanism: "PLAIN"
+  # saslJaasConfig: "org.apache.kafka.common.security.plain.PlainLoginModule required username='<API_KEY>' password='<API_SECRET>';"
+  # schemaRegistryBasicAuthCredentialsSource: "USER_INFO"
+  # schemaRegistryBasicAuthUserInfo: "<SR_API_KEY>:<SR_API_SECRET>"
+  # clientDnsLookup: "use_all_dns_ips"
+  # sessionTimeoutMs: 45000
+  # environment: "cloud"
+
+  # Optional Flink API credentials
+  # apiKey: "<FLINK_API_KEY>"
+  # apiSecret: "<FLINK_API_SECRET>"
+
 simulation:
   numFlights: 100
   updateInterval: "PT1S"  # ISO-8601 duration format: 1 second
