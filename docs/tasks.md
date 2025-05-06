@@ -34,18 +34,20 @@ This document contains a detailed task list for implementing the Real-Time Fligh
 ## 2. Data Pipeline Implementation
 
 ### 2.1 Flight Data Generator
-- [ ] 2.1.1 Create Kotlin application for data generation
-- [ ] 2.1.2 Implement flight data simulation logic
-- [ ] 2.1.3 Configure coroutines for concurrent data generation
-- [ ] 2.1.4 Implement Kafka producer with Avro serialization
-- [ ] 2.1.5 Add configuration for flight patterns and update frequency
-- [ ] 2.1.6 Test data generation and Kafka publishing
+- [x] 2.1.1 Create Kotlin application for data generation
+- [x] 2.1.2 Implement flight data simulation logic
+- [x] 2.1.3 Configure coroutines for concurrent data generation
+- [x] 2.1.4 Implement Kafka producer with Avro serialization
+- [x] 2.1.5 Add configuration for flight patterns and update frequency
+- [x] 2.1.6 Test data generation and Kafka publishing
+- [x] 2.1.7 Create separate Gradle module for the generator
 
 ### 2.2 Avro Schema
-- [ ] 2.2.1 Define Avro schema for flight data
-- [ ] 2.2.2 Register schema with Schema Registry
-- [ ] 2.2.3 Generate Avro classes for Kotlin
-- [ ] 2.2.4 Test schema compatibility
+- [x] 2.2.1 Define Avro schema for flight data
+- [x] 2.2.2 Register schema with Schema Registry
+- [x] 2.2.3 Generate Avro classes for Kotlin
+- [x] 2.2.4 Test schema compatibility
+- [x] 2.2.5 Update generator to use Avro generated objects
 
 ### 2.3 Flink Table API/SQL Jobs
 - [ ] 2.3.1 Implement stateless processing job
@@ -207,3 +209,4 @@ This document contains a detailed task list for implementing the Real-Time Fligh
 - [x] 6.3.1 Create GitHub Actions workflow for stack validation
 - [x] 6.3.2 Configure Renovate for dependency management
 - [x] 6.3.3 Document CI/CD setup in README
+- [x] 6.3.4 Create GitHub Actions workflow for generator project

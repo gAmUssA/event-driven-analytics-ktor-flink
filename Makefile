@@ -37,6 +37,7 @@ help:
 	@echo "${GREEN}make trino-ui${NC}     - Open Trino UI in browser"
 	@echo "${GREEN}make validate-trino${NC} - Validate Trino connectivity and functionality"
 	@echo "${GREEN}make minio-ui${NC}     - Open MinIO UI in browser"
+	@echo "${GREEN}make run-generator${NC} - Run the Flight Data Generator"
 	@echo ""
 	@echo "${YELLOW}${INFO} For more information, see README.md${NC}"
 
@@ -144,3 +145,10 @@ validate-trino:
 minio-ui:
 	@echo "${BLUE}${INFO} Opening MinIO UI in browser...${NC}"
 	open http://localhost:9001
+
+# Run the Flight Data Generator
+.PHONY: run-generator
+run-generator:
+	@echo "${GREEN}${PLANE} Running the Flight Data Generator...${NC}"
+	./generator/scripts/run-generator.sh
+	@echo "${GREEN}${CHECK} Flight Data Generator started!${NC}"

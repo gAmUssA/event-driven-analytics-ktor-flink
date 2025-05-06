@@ -108,7 +108,7 @@ inline fun <T> Connection.querySingle(statement: String, vararg parameters: Any?
  * or rolled back if an exception is thrown.
  */
 inline fun <T> Connection.transaction(block: (Connection) -> T): T {
-    val autoCommit = autoCommit
+    val originalAutoCommit = autoCommit
     try {
         autoCommit = false
         val result = block(this)
@@ -123,7 +123,7 @@ inline fun <T> Connection.transaction(block: (Connection) -> T): T {
         throw e
     } finally {
         try {
-            autoCommit = autoCommit
+            autoCommit = originalAutoCommit
         } catch (e: Exception) {
             // Ignore
         }
@@ -156,14 +156,14 @@ fun PreparedStatement.setParameter(index: Int, value: Any?) {
 /**
  * Gets a value from the result set by column name.
  */
-inline fun <reified T> ResultSet.get(columnName: String): T? {
+inline fun <reified T : Any> ResultSet.get(columnName: String): T? {
     return getTyped(columnName, T::class)
 }
 
 /**
  * Gets a value from the result set by column index.
  */
-inline fun <reified T> ResultSet.get(columnIndex: Int): T? {
+inline fun <reified T : Any> ResultSet.get(columnIndex: Int): T? {
     return getTyped(columnIndex, T::class)
 }
 
@@ -215,13 +215,13 @@ fun <T : Any> ResultSet.getTyped(columnIndex: Int, type: KClass<T>): T? {
 abstract class Table(val name: String) {
     val columns = mutableListOf<Column<*>>()
     var primaryKey: PrimaryKey? = null
-    
+
     fun <T> column(name: String, type: ColumnType<T>): Column<T> {
         val column = Column(name, type, this)
         columns.add(column)
         return column
     }
-    
+
     fun varchar(name: String, length: Int): Column<String> = column(name, VarcharType(length))
     fun integer(name: String): Column<Int> = column(name, IntegerType)
     fun long(name: String): Column<Long> = column(name, LongType)
@@ -229,13 +229,13 @@ abstract class Table(val name: String) {
     fun boolean(name: String): Column<Boolean> = column(name, BooleanType)
     fun datetime(name: String): Column<LocalDateTime> = column(name, DateTimeType)
     fun blob(name: String): Column<ByteArray> = column(name, BlobType)
-    
+
     fun primaryKey(vararg columns: Column<*>): PrimaryKey {
         val pk = PrimaryKey(*columns)
         primaryKey = pk
         return pk
     }
-    
+
     /**
      * Creates the table in the database.
      */
@@ -244,11 +244,11 @@ abstract class Table(val name: String) {
         val pkDefinition = primaryKey?.let { 
             ", PRIMARY KEY (${it.columns.joinToString(", ") { col -> col.name }})" 
         } ?: ""
-        
+
         val createStatement = "CREATE TABLE IF NOT EXISTS $name ($columnsDefinition$pkDefinition)"
         connection.update(createStatement)
     }
-    
+
     /**
      * Drops the table from the database.
      */
@@ -273,7 +273,7 @@ class Column<T>(
     fun getDefinition(): String {
         return "$name ${type.sqlType}"
     }
-    
+
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnReference<T> {
         return ColumnReference(this)
     }
@@ -285,7 +285,7 @@ class Column<T>(
 class ColumnReference<T>(val column: Column<T>) {
     val name: String get() = column.name
     val table: Table get() = column.table
-    
+
     infix fun eq(value: T?): Condition = Condition("${column.name} = ?", value)
     infix fun neq(value: T?): Condition = Condition("${column.name} <> ?", value)
     infix fun greater(value: T): Condition = Condition("${column.name} > ?", value)
@@ -297,7 +297,11 @@ class ColumnReference<T>(val column: Column<T>) {
     fun isNotNull(): Condition = Condition("${column.name} IS NOT NULL")
     infix fun inList(values: List<T>): Condition {
         val placeholders = values.joinToString(", ") { "?" }
-        return Condition("${column.name} IN ($placeholders)", *values.toTypedArray())
+        return Condition("${column.name} IN ($placeholders)", *values.toArray())
+    }
+
+    private fun List<T>.toArray(): Array<Any?> {
+        return this.map { it as Any? }.toTypedArray()
     }
 }
 
@@ -306,11 +310,13 @@ class ColumnReference<T>(val column: Column<T>) {
  */
 class Condition(val sql: String, vararg val parameters: Any?) {
     infix fun and(other: Condition): Condition {
-        return Condition("($sql) AND (${other.sql})", *(parameters + other.parameters))
+        val combinedParams = parameters.toList() + other.parameters.toList()
+        return Condition("($sql) AND (${other.sql})", *combinedParams.toTypedArray())
     }
-    
+
     infix fun or(other: Condition): Condition {
-        return Condition("($sql) OR (${other.sql})", *(parameters + other.parameters))
+        val combinedParams = parameters.toList() + other.parameters.toList()
+        return Condition("($sql) OR (${other.sql})", *combinedParams.toTypedArray())
     }
 }
 
@@ -337,67 +343,67 @@ class QueryBuilder(val table: Table) {
     private var orderByColumns = mutableListOf<Pair<Column<*>, SortOrder>>()
     private var limitValue: Int? = null
     private var offsetValue: Int? = null
-    
+
     fun where(condition: Condition): QueryBuilder {
         conditions = condition
         return this
     }
-    
+
     fun orderBy(column: Column<*>, order: SortOrder = SortOrder.ASC): QueryBuilder {
         orderByColumns.add(column to order)
         return this
     }
-    
+
     fun orderBy(columnOrder: Pair<Column<*>, SortOrder>): QueryBuilder {
         orderByColumns.add(columnOrder)
         return this
     }
-    
+
     fun limit(limit: Int): QueryBuilder {
         limitValue = limit
         return this
     }
-    
+
     fun offset(offset: Int): QueryBuilder {
         offsetValue = offset
         return this
     }
-    
+
     fun buildSelectQuery(columns: List<Column<*>> = table.columns): String {
         val columnsStr = columns.joinToString(", ") { it.name }
         var query = "SELECT $columnsStr FROM ${table.name}"
-        
+
         conditions?.let { query += " WHERE ${it.sql}" }
-        
+
         if (orderByColumns.isNotEmpty()) {
             val orderByStr = orderByColumns.joinToString(", ") { 
-                "${it.first.name} ${it.second.name}" 
+                "${it.first.name} ${it.second.sqlName}" 
             }
             query += " ORDER BY $orderByStr"
         }
-        
+
         limitValue?.let { query += " LIMIT $it" }
         offsetValue?.let { query += " OFFSET $it" }
-        
+
         return query
     }
-    
+
     fun getParameters(): Array<Any?> {
-        return conditions?.parameters ?: emptyArray()
+        return conditions?.parameters?.let { it.toList().toTypedArray() } ?: emptyArray()
     }
-    
+
     inline fun <T> executeQuery(connection: Connection, mapper: (ResultSet) -> T): List<T> {
         val query = buildSelectQuery()
         val params = getParameters()
         return connection.queryList(query, *params, mapper = mapper)
     }
-    
+
     inline fun <T> executeSingleQuery(connection: Connection, mapper: (ResultSet) -> T): T? {
         val query = buildSelectQuery()
         val params = getParameters()
         return connection.querySingle(query, *params, mapper = mapper)
     }
-    
+
     fun count(connection: Connection): Long {
         val query = "SELECT COUNT(*) FROM ${table.name}" + 
                     (conditions?.let { " WHERE ${it.sql}" } ?: "")
@@ -406,7 +412,7 @@ class QueryBuilder(val table: Table) {
     }
 }
 
-enum class SortOrder(val name: String) {
+enum class SortOrder(val sqlName: String) {
     ASC("ASC"),
     DESC("DESC")
 }
@@ -427,9 +433,9 @@ fun Table.insert(connection: Connection, values: Map<Column<*>, Any?>): Long? {
     val columns = values.keys.joinToString(", ") { it.name }
     val placeholders = values.keys.joinToString(", ") { "?" }
     val params = values.values.toTypedArray()
-    
+
     val query = "INSERT INTO $name ($columns) VALUES ($placeholders)"
-    
+
     return connection.executeWithKeys(query, *params) { rs ->
         if (rs.next()) rs.getLong(1) else null
     }
@@ -441,9 +447,9 @@ fun Table.insert(connection: Connection, values: Map<Column<*>, Any?>): Long? {
 fun Table.update(connection: Connection, values: Map<Column<*>, Any?>, condition: Condition): Int {
     val setClause = values.keys.joinToString(", ") { "${it.name} = ?" }
     val params = values.values.toList() + condition.parameters
-    
+
     val query = "UPDATE $name SET $setClause WHERE ${condition.sql}"
-    
+
     return connection.update(query, *params.toTypedArray())
 }
 
@@ -476,17 +482,17 @@ class ConnectionPool(
 ) {
     private val connections = mutableListOf<Connection>()
     private val lock = Any()
-    
+
     fun getConnection(): Connection {
         synchronized(lock) {
             if (connections.isNotEmpty()) {
                 return connections.removeAt(connections.size - 1)
             }
-            
+
             return createConnection(url, username, password)
         }
     }
-    
+
     fun releaseConnection(connection: Connection) {
         synchronized(lock) {
             if (connections.size < maxConnections) {
@@ -496,7 +502,7 @@ class ConnectionPool(
             }
         }
     }
-    
+
     inline fun <T> withConnection(block: (Connection) -> T): T {
         val connection = getConnection()
         return try {
@@ -505,13 +511,13 @@ class ConnectionPool(
             releaseConnection(connection)
         }
     }
-    
+
     inline fun <T> transaction(block: (Connection) -> T): T {
         return withConnection { conn ->
             conn.transaction(block)
         }
     }
-    
+
     fun close() {
         synchronized(lock) {
             connections.forEach { it.close() }

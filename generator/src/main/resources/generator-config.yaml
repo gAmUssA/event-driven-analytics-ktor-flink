@@ -1,0 +1,28 @@
+# Flight Data Generator Configuration
+
+kafka:
+  bootstrapServers: "localhost:29092"
+  schemaRegistryUrl: "http://localhost:8081"
+  topic: "flights"
+  clientId: "flight-data-generator"
+  acks: "all"
+  retries: 3
+  batchSize: 16384
+  lingerMs: 1
+  bufferMemory: 33554432
+
+simulation:
+  numFlights: 100
+  updateInterval: "PT1S"  # ISO-8601 duration format: 1 second
+  speedFactor: 1.0
+  initialAltitudeMin: 30000
+  initialAltitudeMax: 40000
+  initialLatitudeMin: 25.0
+  initialLatitudeMax: 50.0
+  initialLongitudeMin: -125.0
+  initialLongitudeMax: -70.0
+  flightStatusProbabilities:
+    ON_TIME: 0.7
+    DELAYED: 0.2
+    CANCELLED: 0.05
+    DIVERTED: 0.05
