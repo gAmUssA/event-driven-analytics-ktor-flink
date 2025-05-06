@@ -3,8 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    application
+    id("com.github.davidmc24.gradle.plugin.avro")
 }
 
 group = "dev.gamov"
@@ -16,9 +15,6 @@ repositories {
 }
 
 dependencies {
-    // Common module
-    implementation(project(":common"))
-
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -60,34 +56,14 @@ java {
     }
 }
 
-application {
-    mainClass.set("dev.gamov.flightdemo.generator.Main")
-}
-
-tasks.shadowJar {
-    manifest {
-        attributes(
-            "Main-Class" to "dev.gamov.flightdemo.generator.Main"
-        )
-    }
-    archiveClassifier.set("")
-    mergeServiceFiles()
-}
-
-// Fix dependency issues between shadowJar and distribution tasks
-tasks.distZip {
-    dependsOn(tasks.shadowJar)
-}
-
-tasks.distTar {
-    dependsOn(tasks.shadowJar)
-}
-
-tasks.startScripts {
-    dependsOn(tasks.shadowJar)
-}
-
-// Fix dependency issue with startShadowScripts
-tasks.named("startShadowScripts") {
-    dependsOn(tasks.jar)
+// Avro generation configuration
+avro {
+    isCreateSetters.set(true)
+    isCreateOptionalGetters.set(false)
+    isGettersReturnOptional.set(false)
+    fieldVisibility.set("PRIVATE")
+    outputCharacterEncoding.set("UTF-8")
+    stringType.set("String")
+    templateDirectory.set(null as String?)
+    isEnableDecimalLogicalType.set(true)
 }

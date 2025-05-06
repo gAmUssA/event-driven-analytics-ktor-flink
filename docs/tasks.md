@@ -50,24 +50,24 @@ This document contains a detailed task list for implementing the Real-Time Fligh
 - [x] 2.2.5 Update generator to use Avro generated objects
 
 ### 2.3 Flink Table API/SQL Jobs
-- [ ] 2.3.1 Implement stateless processing job
-  - [ ] 2.3.1.1 Configure Kafka source connector
-  - [ ] 2.3.1.2 Write SQL query for filtering flights above 35,000 feet
-  - [ ] 2.3.1.3 Add region identifier calculation
-  - [ ] 2.3.1.4 Configure Kafka sink connector
-  - [ ] 2.3.1.5 Test stateless job
+- [x] 2.3.1 Implement stateless processing job
+  - [x] 2.3.1.1 Configure Kafka source connector
+  - [x] 2.3.1.2 Write SQL query for filtering flights above 35,000 feet
+  - [x] 2.3.1.3 Add region identifier calculation
+  - [x] 2.3.1.4 Configure Kafka sink connector
+  - [x] 2.3.1.5 Test stateless job
 
-- [ ] 2.3.2 Implement stateful processing job
-  - [ ] 2.3.2.1 Configure Kafka source connector
-  - [ ] 2.3.2.2 Write SQL query for windowed aggregation
-  - [ ] 2.3.2.3 Configure Iceberg sink connector
-  - [ ] 2.3.2.4 Test stateful job
+- [x] 2.3.2 Implement stateful processing job
+  - [x] 2.3.2.1 Configure Kafka source connector
+  - [x] 2.3.2.2 Write SQL query for windowed aggregation
+  - [x] 2.3.2.3 Configure Iceberg sink connector
+  - [x] 2.3.2.4 Test stateful job
 
 ### 2.4 Iceberg Configuration
-- [ ] 2.4.1 Define Iceberg table schema
-- [ ] 2.4.2 Configure partitioning by time
-- [ ] 2.4.3 Set up Iceberg REST catalog for Flink
-- [ ] 2.4.4 Test Flink to Iceberg writing
+- [x] 2.4.1 Define Iceberg table schema
+- [x] 2.4.2 Configure partitioning by time
+- [x] 2.4.3 Set up Iceberg REST catalog for Flink
+- [x] 2.4.4 Test Flink to Iceberg writing
 
 ## 3. Backend Development
 

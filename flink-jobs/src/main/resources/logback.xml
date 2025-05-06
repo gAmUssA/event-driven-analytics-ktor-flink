@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Disable Logback's internal status messages -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+    <!-- Enable JAnsi for Windows ANSI color support -->
+    <!-- Use built-in logback color codes -->
+    <conversionRule conversionWord="highlight"
+                    converterClass="ch.qos.logback.classic.pattern.color.HighlightingCompositeConverter" />
+
+    <!-- Console Appender for logging to the console with colors -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- Allow ANSI color codes -->
+        <withJansi>true</withJansi>
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss} %highlight(%-5level) [%green(%thread)] %magenta(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- Custom logger for your application -->
+    <logger name="dev.gamov.flightdemo" level="INFO" />
+
+    <!-- Reduce verbosity for specific libraries -->
+    <logger name="org.apache.kafka" level="WARN" />
+    <logger name="org.apache.flink" level="WARN" />
+    <logger name="io.confluent" level="WARN" />
+
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

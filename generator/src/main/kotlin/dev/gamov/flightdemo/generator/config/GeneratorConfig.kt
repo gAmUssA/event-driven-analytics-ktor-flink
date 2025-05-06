@@ -1,10 +1,8 @@
 package dev.gamov.flightdemo.generator.config
 
-import com.sksamuel.hoplite.ConfigLoader
-import com.sksamuel.hoplite.PropertySource
-import com.sksamuel.hoplite.yaml.YamlPropertySource
-import org.slf4j.LoggerFactory
-import java.io.File
+import com.sksamuel.hoplite.ConfigAlias
+import dev.gamov.flightdemo.common.config.ConfigUtils
+import dev.gamov.flightdemo.common.config.KafkaConfigBase
 import java.time.Duration
 
 /**
@@ -15,8 +13,6 @@ data class GeneratorConfig(
     val simulation: SimulationConfig
 ) {
     companion object {
-        private val logger = LoggerFactory.getLogger(GeneratorConfig::class.java)
-
         /**
          * Loads the configuration from the specified file or classpath.
          *
@@ -24,85 +20,63 @@ data class GeneratorConfig(
          * @return The loaded configuration.
          */
         fun load(configFile: String): GeneratorConfig {
-            // Try to load from the provided file path
-            val file = File(configFile)
-            if (file.exists()) {
-                logger.info("Loading configuration from file: {}", configFile)
-                try {
-                    return loadFromFile(file)
-                } catch (e: Exception) {
-                    logger.warn("Failed to load configuration from file: {}", e.message)
+            return ConfigUtils.loadConfig(
+                configFile = configFile,
+                classpathResource = "/generator-config.yaml",
+                defaultConfig = {
+                    GeneratorConfig(
+                        kafka = KafkaConfig(
+                            bootstrapServers = "localhost:29092",
+                            schemaRegistryUrl = "http://localhost:8081",
+                            topic = "flights"
+                        ),
+                        simulation = SimulationConfig()
+                    )
                 }
-            }
-
-            // Try to load from classpath
-            try {
-                logger.info("Trying to load configuration from classpath")
-                return loadFromClasspath()
-            } catch (e: Exception) {
-                logger.warn("Failed to load configuration from classpath: {}", e.message)
-            }
-
-            // Fall back to default configuration
-            logger.info("Using default configuration")
-            return createDefaultConfig()
-        }
-
-        private fun loadFromFile(file: File): GeneratorConfig {
-            return ConfigLoader.builder()
-                .addSource(YamlPropertySource(file.absolutePath))
-                .addSource(PropertySource.environment())
-                .build()
-                .loadConfigOrThrow()
-        }
-
-        private fun loadFromClasspath(): GeneratorConfig {
-            val configLoader = ConfigLoader.builder()
-                .addSource(PropertySource.resource("/generator-config.yaml"))
-                .addSource(PropertySource.environment())
-                .build()
-
-            return configLoader.loadConfigOrThrow()
-        }
-
-        private fun createDefaultConfig(): GeneratorConfig {
-            return GeneratorConfig(
-                kafka = KafkaConfig(
-                    bootstrapServers = "localhost:29092",
-                    schemaRegistryUrl = "http://localhost:8081",
-                    topic = "flights"
-                ),
-                simulation = SimulationConfig()
             )
         }
     }
 }
 
 /**
- * Kafka configuration.
+ * Kafka configuration for the generator.
+ * Implements the common KafkaConfigBase interface with generator-specific properties.
  */
 data class KafkaConfig(
-    val bootstrapServers: String,
-    val schemaRegistryUrl: String,
+    override val bootstrapServers: String,
+    override val schemaRegistryUrl: String,
     val topic: String,
+    @ConfigAlias("client.id")
     val clientId: String = "flight-data-generator",
     val acks: String = "all",
     val retries: Int = 3,
+    @ConfigAlias("batch.size")
     val batchSize: Int = 16384,
+    @ConfigAlias("linger.ms")
     val lingerMs: Long = 1,
+    @ConfigAlias("buffer.memory")
     val bufferMemory: Long = 33554432,
     // Confluent Cloud specific properties
+    @ConfigAlias("security.protocol")
     val securityProtocol: String? = null,
+    @ConfigAlias("sasl.mechanism")
     val saslMechanism: String? = null,
+    @ConfigAlias("sasl.jaas.config")
     val saslJaasConfig: String? = null,
+    @ConfigAlias("schema.registry.basic.auth.credentials.source")
     val schemaRegistryBasicAuthCredentialsSource: String? = null,
+    @ConfigAlias("schema.registry.basic.auth.user.info")
     val schemaRegistryBasicAuthUserInfo: String? = null,
+    @ConfigAlias("client.dns.lookup")
     val clientDnsLookup: String? = null,
+    @ConfigAlias("session.timeout.ms")
     val sessionTimeoutMs: Int? = null,
     val environment: String? = null,
+    @ConfigAlias("api.key")
     val apiKey: String? = null,
+    @ConfigAlias("api.secret")
     val apiSecret: String? = null
-)
+) : KafkaConfigBase
 
 /**
  * Flight simulation configuration.

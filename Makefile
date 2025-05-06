@@ -38,6 +38,12 @@ help:
 	@echo "${GREEN}make validate-trino${NC} - Validate Trino connectivity and functionality"
 	@echo "${GREEN}make minio-ui${NC}     - Open MinIO UI in browser"
 	@echo "${GREEN}make run-generator${NC} - Run the Flight Data Generator"
+	@echo "${GREEN}make run-stateless${NC} - Run the Stateless Flink Job locally"
+	@echo "${GREEN}make run-stateful${NC} - Run the Stateful Flink Job locally"
+	@echo "${GREEN}make deploy-stateless${NC} - Deploy the Stateless Flink Job to the Flink cluster"
+	@echo "${GREEN}make deploy-stateful${NC} - Deploy the Stateful Flink Job to the Flink cluster"
+	@echo "${GREEN}make list-jobs${NC}    - List running Flink jobs"
+	@echo "${GREEN}make cancel-job JOB_ID=<id>${NC} - Cancel a specific Flink job"
 	@echo ""
 	@echo "${YELLOW}${INFO} For more information, see README.md${NC}"
 
@@ -152,3 +158,62 @@ run-generator:
 	@echo "${GREEN}${PLANE} Running the Flight Data Generator...${NC}"
 	./generator/scripts/run-generator.sh
 	@echo "${GREEN}${CHECK} Flight Data Generator started!${NC}"
+
+# Run the Stateless Flink Job locally
+.PHONY: run-stateless
+run-stateless:
+	@echo "${GREEN}${ROCKET} Running the Stateless Flink Job locally...${NC}"
+	./gradlew :flink-jobs:runStatelessJob --args="flink-jobs/src/main/resources/application-local.yaml"
+	@echo "${GREEN}${CHECK} Stateless Flink Job submitted!${NC}"
+
+# Run the Stateful Flink Job locally
+.PHONY: run-stateful
+run-stateful: 
+	@echo "${GREEN}${ROCKET} Running the Stateful Flink Job locally...${NC}"
+	./gradlew :flink-jobs:runStatefulJob --args="flink-jobs/src/main/resources/application-local.yaml"
+	@echo "${GREEN}${CHECK} Stateful Flink Job submitted!${NC}"
+
+# Deploy the Stateless Flink Job to the Flink cluster
+.PHONY: deploy-stateless
+deploy-stateless:
+	@echo "${GREEN}${ROCKET} Deploying the Stateless Flink Job to the Flink cluster...${NC}"
+	@echo "${BLUE}${INFO} Building the Flink Jobs module...${NC}"
+	./gradlew :flink-jobs:shadowJar
+	@echo "${BLUE}${INFO} Creating usrlib directory if it doesn't exist...${NC}"
+	docker exec -it jobmanager mkdir -p /opt/flink/usrlib || echo "${RED}${ERROR} Failed to create directory${NC}"
+	@echo "${BLUE}${INFO} Copying JAR to Flink cluster...${NC}"
+	docker cp flink-jobs/build/libs/flink-jobs-0.1.0-SNAPSHOT.jar jobmanager:/opt/flink/usrlib/ || echo "${RED}${ERROR} Failed to copy JAR${NC}"
+	@echo "${BLUE}${INFO} Submitting job to Flink cluster...${NC}"
+	docker exec -it jobmanager flink run -d -c dev.gamov.flightdemo.flink.StatelessJobKt /opt/flink/usrlib/flink-jobs-0.1.0-SNAPSHOT.jar || echo "${RED}${ERROR} Failed to submit job${NC}"
+	@echo "${GREEN}${CHECK} Stateless Flink Job deployed!${NC}"
+
+# Deploy the Stateful Flink Job to the Flink cluster
+.PHONY: deploy-stateful
+deploy-stateful:
+	@echo "${GREEN}${ROCKET} Deploying the Stateful Flink Job to the Flink cluster...${NC}"
+	@echo "${BLUE}${INFO} Building the Flink Jobs module...${NC}"
+	./gradlew :flink-jobs:shadowJar
+	@echo "${BLUE}${INFO} Creating usrlib directory if it doesn't exist...${NC}"
+	docker exec -it jobmanager mkdir -p /opt/flink/usrlib || echo "${RED}${ERROR} Failed to create directory${NC}"
+	@echo "${BLUE}${INFO} Copying JAR to Flink cluster...${NC}"
+	docker cp flink-jobs/build/libs/flink-jobs-0.1.0-SNAPSHOT.jar jobmanager:/opt/flink/usrlib/ || echo "${RED}${ERROR} Failed to copy JAR${NC}"
+	@echo "${BLUE}${INFO} Submitting job to Flink cluster...${NC}"
+	docker exec -it jobmanager flink run -d -c dev.gamov.flightdemo.flink.StatefulJobKt /opt/flink/usrlib/flink-jobs-0.1.0-SNAPSHOT.jar || echo "${RED}${ERROR} Failed to submit job${NC}"
+	@echo "${GREEN}${CHECK} Stateful Flink Job deployed!${NC}"
+
+# List running Flink jobs
+.PHONY: list-jobs
+list-jobs:
+	@echo "${BLUE}${INFO} Listing running Flink jobs...${NC}"
+	docker exec -it jobmanager flink list
+
+# Cancel a Flink job
+.PHONY: cancel-job
+cancel-job:
+	@if [ -z "$(JOB_ID)" ]; then \
+		echo "${RED}${ERROR} Please provide a JOB_ID: make cancel-job JOB_ID=<id>${NC}"; \
+	else \
+		echo "${YELLOW}${WARNING} Cancelling Flink job $(JOB_ID)...${NC}"; \
+		docker exec -it jobmanager flink cancel $(JOB_ID); \
+		echo "${GREEN}${CHECK} Job cancelled!${NC}"; \
+	fi

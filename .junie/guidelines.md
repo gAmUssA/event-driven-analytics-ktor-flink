@@ -312,15 +312,71 @@ fun testFlightsEndpoint() = testApplication {
 }
 ```
 
-### 7.3 Flink Testing
-- Use `StreamExecutionEnvironment.createLocalEnvironment()` for testing
-- Test with small, deterministic datasets
-- Verify output using collectors
+### 7.3 Testing Guidelines for Flink Kafka Table API Project
 
-### 7.4 Integration Testing
-- Use Docker Compose for integration tests
-- Test the entire data flow
-- Verify end-to-end functionality
+#### Overview
+This document outlines the testing guidelines and best practices for the Flink Kafka Table API project. 
+
+#### Core Testing Frameworks
+- **JUnit 5**: The primary testing framework used for writing and executing tests
+- **Testcontainers**: Used for creating containerized test environments for Kafka and Schema Registry
+- **Apache Flink Testing Utilities**: Including MiniClusterWithClientResource for local Flink testing
+
+#### Kafka Testing Components
+- **KafkaContainer**: For running Kafka in a Docker container during tests
+- **Schema Registry Container**: For running Schema Registry alongside Kafka
+- **KafkaProducer/KafkaConsumer**: For producing and consuming test messages
+
+#### Testing Patterns
+
+##### Integration Testing
+- Use containerized services (Kafka, Schema Registry) for realistic testing
+- Test the full data pipeline from producer to consumer
+- Verify data transformations and business logic
+
+##### Flink-Specific Testing
+- Use Flink's MiniClusterWithClientResource for local testing
+- Create and execute Flink jobs in tests
+- Query and validate results using Table API
+
+##### Kafka Testing Practices
+- Create topics programmatically before tests
+- Use Avro serialization with Schema Registry
+- Implement proper consumer polling with timeouts
+- Handle both specific and generic Avro record types
+
+#### Assertion Strategies
+- Verify record counts match expectations after filtering
+- Validate field-by-field data transformation
+- Check currency conversion logic with appropriate precision (using delta in assertEquals)
+- Ensure proper error handling and logging
+
+#### Logging Best Practices
+- Use SLF4J for consistent logging across tests
+- Log test setup and teardown activities
+- Include detailed information in log messages (IDs, values, etc.)
+- Log unexpected conditions or errors
+
+#### Test Execution
+- Tests should be independent and not rely on external services
+- Use appropriate timeouts for asynchronous operations
+- Clean up resources in teardown methods
+- Handle thread interruption properly
+
+#### Error Handling
+- Use try-catch blocks for operations that might fail
+- Log detailed error information
+- Ensure resources are properly closed even when exceptions occur
+- Use assertions to verify expected behavior
+
+#### Best Practices
+1. Always extend Base Test for consistent test environment setup
+2. Use descriptive test method names that explain what is being tested
+3. Structure tests with Arrange-Act-Assert pattern
+4. Include appropriate timeouts for Kafka operations
+5. Verify both happy path and edge cases
+6. Clean up resources in teardown methods
+7. Use appropriate logging levels for different types of information
 
 ## 8. Documentation Guidelines
 

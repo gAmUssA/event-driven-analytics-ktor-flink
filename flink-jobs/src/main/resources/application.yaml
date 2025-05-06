@@ -1,0 +1,32 @@
+kafka:
+  bootstrapServers: "localhost:29092"
+  schemaRegistryUrl: "http://localhost:8081"
+  groupId: "flink-jobs"
+  autoOffsetReset: "earliest"
+  topics:
+    flights: "flights"
+    processedFlights: "processed_flights"
+
+flink:
+  checkpointing:
+    interval: 60000  # 1 minute
+    timeout: 30000   # 30 seconds
+    min-pause: 10000 # 10 seconds
+    max-concurrent: 1
+  state:
+    backend: "rocksdb"
+    dir: "/tmp/flink-checkpoints"
+
+iceberg:
+  catalog:
+    name: "iceberg_catalog"
+    type: "rest"
+    uri: "http://rest-catalog:8181"
+    warehouse: "s3a://warehouse/wh"
+  tables:
+    flight_data:
+      name: "flight_data"
+      partitioning: "days(timestamp)"
+    flight_aggregates:
+      name: "flight_aggregates"
+      partitioning: "days(window_start)"
