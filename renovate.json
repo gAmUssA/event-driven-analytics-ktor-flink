@@ -1,34 +1,67 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
   "packageRules": [
     {
-      "matchDatasources": ["docker"],
+      "matchCategories": [
+        "docker"
+      ],
+      "enabled": true
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
       "groupName": "Docker dependencies",
-      "labels": ["docker", "dependencies"],
-      "schedule": ["every weekend"]
+      "labels": [
+        "docker",
+        "dependencies"
+      ],
+      "schedule": [
+        "every weekend"
+      ]
     },
     {
-      "matchPackagePatterns": ["^org\\.apache\\.flink"],
       "groupName": "Flink dependencies",
-      "labels": ["flink", "dependencies"]
+      "labels": [
+        "flink",
+        "dependencies"
+      ],
+      "matchPackageNames": [
+        "/^org\\.apache\\.flink/"
+      ]
     },
     {
-      "matchPackagePatterns": ["^org\\.apache\\.kafka"],
       "groupName": "Kafka dependencies",
-      "labels": ["kafka", "dependencies"]
+      "labels": [
+        "kafka",
+        "dependencies"
+      ],
+      "matchPackageNames": [
+        "/^org\\.apache\\.kafka/"
+      ]
     },
     {
-      "matchPackagePatterns": ["^io\\.ktor"],
       "groupName": "Ktor dependencies",
-      "labels": ["ktor", "dependencies"]
+      "labels": [
+        "ktor",
+        "dependencies"
+      ],
+      "matchPackageNames": [
+        "/^io\\.ktor/"
+      ]
     },
     {
-      "matchPackagePatterns": ["^org\\.jetbrains\\.kotlin"],
       "groupName": "Kotlin dependencies",
-      "labels": ["kotlin", "dependencies"]
+      "labels": [
+        "kotlin",
+        "dependencies"
+      ],
+      "matchPackageNames": [
+        "/^org\\.jetbrains\\.kotlin/"
+      ]
     }
   ],
   "prConcurrentLimit": 5,
@@ -37,9 +70,6 @@
   "automergeType": "branch",
   "major": {
     "automerge": false
-  },
-  "docker": {
-    "enabled": true
   },
   "gradle": {
     "enabled": true
