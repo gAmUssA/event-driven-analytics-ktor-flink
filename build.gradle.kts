@@ -27,7 +27,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
     // Kafka
-    implementation("org.apache.kafka:kafka-clients:3.6.1")
+    implementation("org.apache.kafka:kafka-clients:3.9.0")
     implementation("io.confluent:kafka-avro-serializer:7.5.1")
     implementation("io.confluent:kafka-schema-registry-client:7.5.1")
     implementation("org.apache.avro:avro:1.11.3")
