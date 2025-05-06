@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "groupName": "Docker dependencies",
+      "labels": ["docker", "dependencies"],
+      "schedule": ["every weekend"]
+    },
+    {
+      "matchPackagePatterns": ["^org\\.apache\\.flink"],
+      "groupName": "Flink dependencies",
+      "labels": ["flink", "dependencies"]
+    },
+    {
+      "matchPackagePatterns": ["^org\\.apache\\.kafka"],
+      "groupName": "Kafka dependencies",
+      "labels": ["kafka", "dependencies"]
+    },
+    {
+      "matchPackagePatterns": ["^io\\.ktor"],
+      "groupName": "Ktor dependencies",
+      "labels": ["ktor", "dependencies"]
+    },
+    {
+      "matchPackagePatterns": ["^org\\.jetbrains\\.kotlin"],
+      "groupName": "Kotlin dependencies",
+      "labels": ["kotlin", "dependencies"]
+    }
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "automerge": true,
+  "automergeType": "branch",
+  "major": {
+    "automerge": false
+  },
+  "docker": {
+    "enabled": true
+  },
+  "gradle": {
+    "enabled": true
+  }
+}

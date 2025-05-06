@@ -1,0 +1,233 @@
+services:
+  # Kafka Init - required for KRaft mode
+  kafka-init:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: kafka-init
+    command: >
+      bash -c "
+        echo 'Initializing Kafka storage for KRaft mode...'
+        kafka-storage format --config /etc/kafka/kraft/server.properties --cluster-id MkU3OEVBNTcwNTJENDM2Qk
+        echo 'Kafka storage initialized!'
+      "
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - ./scripts/kafka.properties:/etc/kafka/kraft/server.properties
+    environment:
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+
+  # Kafka with KRaft mode (no Zookeeper)
+  kafka:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: kafka
+    depends_on:
+      - kafka-init
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    command: >
+      bash -c "
+        echo 'Starting Kafka in KRaft mode...'
+        exec /etc/confluent/docker/run
+      "
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:9092,PLAINTEXT_HOST://0.0.0.0:29092,CONTROLLER://kafka:29093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - ./scripts/kafka.properties:/etc/kafka/kraft/server.properties
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Schema Registry
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.0
+    container_name: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kafka UI - optional but useful for debugging
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+
+  # Kafka Setup - creates topics
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.8.0
+    container_name: kafka-setup
+    depends_on:
+      - kafka
+      - schema-registry
+    volumes:
+      - ./scripts:/scripts
+    command: >
+      bash -c "
+        echo 'Waiting for Kafka to be ready...'
+        cub kafka-ready -b kafka:9092 1 30
+        echo 'Creating Kafka topics...'
+        /scripts/create-topics.sh
+      "
+
+  # Flink JobManager
+  jobmanager:
+    image: apache/flink:1.17.1
+    platform: linux/amd64
+    container_name: jobmanager
+    ports:
+      - "8082:8081"
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        state.savepoints.dir: file:///opt/flink/savepoints
+        execution.checkpointing.interval: 10s
+        execution.checkpointing.mode: EXACTLY_ONCE
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-savepoints:/opt/flink/savepoints
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Flink TaskManager
+  taskmanager:
+    image: apache/flink:1.17.1
+    platform: linux/amd64
+    container_name: taskmanager
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+        state.backend: rocksdb
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-savepoints:/opt/flink/savepoints
+
+  # MinIO - S3-compatible storage for Iceberg
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # MinIO setup - creates the bucket for Iceberg
+  minio-setup:
+    image: minio/mc:latest
+    container_name: minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/iceberg;
+      exit 0;
+      "
+
+  # REST Catalog for Iceberg
+  rest-catalog:
+    image: tabulario/iceberg-rest:0.6.0
+    container_name: rest-catalog
+    ports:
+      - "8181:8181"
+    environment:
+      CATALOG_WAREHOUSE: s3://iceberg/warehouse
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3__ENDPOINT: http://minio:9000
+      CATALOG_S3__PATH__STYLE__ACCESS: "true"
+      CATALOG_S3__ACCESS__KEY__ID: minioadmin
+      CATALOG_S3__SECRET__ACCESS__KEY: minioadmin
+      AWS_REGION: us-east-1
+    depends_on:
+      - minio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/v1/config"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Trino coordinator
+  trino-coordinator:
+    image: trinodb/trino:414
+    platform: linux/amd64
+    container_name: trino-coordinator
+    depends_on:
+      - rest-catalog
+    ports:
+      - "8083:8080"
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    volumes:
+      - ./trino/etc:/etc/trino
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  kafka-data:
+  flink-checkpoints:
+  flink-savepoints:
+  minio-data:

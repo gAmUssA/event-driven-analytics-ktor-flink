@@ -29,6 +29,10 @@
 - Write descriptive commit messages
 - Perform code reviews before merging
 
+### 1.4 Makefile Guidelines
+- when required to run more than one command, Use Makefile for building and running the application
+- Use colorful output and emojies for better visibility
+
 ## 2. Kotlin Guidelines
 
 ### 2.1 Language Features
@@ -94,10 +98,10 @@ get("/flights/sse") {
 - Implement proper error handling and retry logic
 - Close Kafka consumers when no longer needed
 
-### 3.5 Exposed Integration
-- Use the DSL API for type-safe queries
-- Implement proper connection pooling
-- Use transactions for database operations
+### 3.5 JDBC Extensions Integration
+- Use the fluent query builder API for type-safe queries
+- Implement proper connection pooling with ConnectionPool
+- Use transactions and withConnection for database operations
 
 ## 4. Flink Table API and SQL Guidelines
 
@@ -162,7 +166,7 @@ val result = tableEnv.sqlQuery("""
 - Configure appropriate checkpoint interval
 - Use RocksDB state backend for large state
 
-## 5. Exposed ORM Guidelines
+## 5. JDBC Extensions Guidelines
 
 ### 5.1 Table Definitions
 - Define tables as objects extending Table
@@ -177,30 +181,83 @@ object FlightTable : Table("flight_data") {
     val altitude = integer("altitude")
     val status = varchar("status", 20)
     val timestamp = datetime("timestamp")
-    
-    override val primaryKey = PrimaryKey(flightId)
+
+    // Define primary key
+    init {
+        primaryKey(flightId)
+    }
 }
 ```
 
 ### 5.2 Queries
-- Use DSL for type-safe queries
+- Use the fluent query builder API for type-safe queries
+- Use connection pool for efficient connection management
 - Use transactions for database operations
 - Implement proper error handling
 
 ```kotlin
-val flights = transaction {
-    FlightTable
-        .select { FlightTable.altitude greater 35000 }
-        .orderBy(FlightTable.timestamp to SortOrder.DESC)
-        .limit(100)
-        .map { it.toFlight() }
+val flights = connectionPool.withConnection { conn ->
+    FlightTable.select { query ->
+        query.where(FlightTable.altitude greater 35000)
+            .orderBy(FlightTable.timestamp, SortOrder.DESC)
+            .limit(100)
+    }.executeQuery(conn) { rs ->
+        rs.toFlight()
+    }
 }
 ```
 
-### 5.3 JDBC Integration
-- Configure connection pooling
-- Use appropriate JDBC driver settings
-- Implement proper error handling for JDBC operations
+### 5.3 Connection Management
+- Use ConnectionPool for efficient connection management
+- Use the withConnection and transaction extension functions
+- Properly close connections when done
+
+```kotlin
+val connectionPool = ConnectionPool(
+    url = "jdbc:postgresql://localhost:5432/flightdb",
+    username = "postgres",
+    password = "password"
+)
+
+try {
+    connectionPool.withConnection { conn ->
+        // Use connection
+    }
+
+    // For transactions
+    connectionPool.transaction { conn ->
+        // Operations in transaction
+    }
+} finally {
+    connectionPool.close()
+}
+```
+
+### 5.4 ResultSet Extensions
+- Use type-safe extensions to retrieve data from ResultSet
+- Create mapping functions for domain objects
+
+```kotlin
+// Using standard JDBC methods
+fun ResultSet.toFlight(): Flight = Flight(
+    flightId = getString("flight_id"),
+    latitude = getDouble("latitude"),
+    longitude = getDouble("longitude"),
+    altitude = getInt("altitude"),
+    status = getString("status"),
+    timestamp = getTimestamp("timestamp").toLocalDateTime()
+)
+
+// Using type-safe extensions
+fun ResultSet.toFlightTypeSafe(): Flight = Flight(
+    flightId = get<String>("flight_id")!!,
+    latitude = get<Double>("latitude")!!,
+    longitude = get<Double>("longitude")!!,
+    altitude = get<Int>("altitude")!!,
+    status = get<String>("status")!!,
+    timestamp = get<LocalDateTime>("timestamp")!!
+)
+```
 
 ## 6. Frontend Development Guidelines
 

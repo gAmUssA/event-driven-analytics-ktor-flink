@@ -51,7 +51,7 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
    - Data Source → Kafka → Flink → Kafka → Ktor → Frontend (SSE)
 
 3. **Use Case 3**:
-   - Data Source → Kafka → Flink → Iceberg → Trino → Ktor (with Exposed) → Frontend (REST)
+   - Data Source → Kafka → Flink → Iceberg → Trino → Ktor (with JDBC Extensions) → Frontend (REST)
 
 ## 3. Component Breakdown
 
@@ -92,7 +92,7 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
 - **Kafka Integration**:
   - Consumers for raw and processed flight data
 - **Database Integration**:
-  - Exposed for Trino JDBC queries
+  - Kotlin JDBC extensions for Trino JDBC queries
 
 ### 3.6 Frontend
 
@@ -122,7 +122,7 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
 1. Set up Ktor project structure
 2. Implement Kafka consumer integration
 3. Create SSE endpoints
-4. Implement Exposed integration with Trino
+4. Implement Kotlin JDBC extensions integration with Trino
 5. Create REST endpoints
 
 ### Phase 4: Frontend Development
@@ -177,25 +177,26 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
 
 - **Iceberg Version**: 1.3+
 - **Table Schema**:
-  ```
-  CREATE TABLE flight_data (
-    flight_id STRING,
-    latitude DOUBLE,
-    longitude DOUBLE,
-    altitude INT,
-    status STRING,
-    timestamp TIMESTAMP,
-    region STRING,
-    flight_count INT,
-    avg_altitude DOUBLE,
-    processed_time TIMESTAMP
-  )
-  PARTITIONED BY (days(timestamp))
-  ```
+  - flight_id (STRING)
+  - latitude (DOUBLE)
+  - longitude (DOUBLE)
+  - altitude (INT)
+  - status (STRING)
+  - timestamp (TIMESTAMP)
+  - region (STRING)
+  - flight_count (INT)
+  - avg_altitude (DOUBLE)
+  - processed_time (TIMESTAMP)
+  - Partitioned by days(timestamp)
 - **Trino Version**: 414+
 - **Catalog Configuration**:
   - Iceberg connector for Trino
-  - JDBC connection parameters for Exposed
+  - JDBC connection parameters for Kotlin JDBC extensions
+
+- **Table Definition Using JDBC Extensions**:
+  - Define FlightDataTable object extending Table class
+  - Include columns matching Iceberg schema with appropriate types
+  - Set primary key on flightId column
 
 ### 5.5 Ktor Backend
 
@@ -210,16 +211,32 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
 - **Kafka Integration**:
   - `org.apache.kafka:kafka-clients`: Kafka consumer
   - `io.confluent:kafka-avro-serializer`: Avro serialization
+  - SSE implementation for streaming Kafka data:
+    - Configure Kafka consumer with appropriate deserializers and Schema Registry
+    - Create SSE endpoint for raw flight data (/flights/sse)
+    - Create SSE endpoint for processed flight data (/processed_flights/sse)
+    - Implement proper resource cleanup when client disconnects
+    - Handle data transformation from Avro to JSON format
 
 - **Database Integration**:
-  - `org.jetbrains.exposed:exposed-core`: Core Exposed functionality
-  - `org.jetbrains.exposed:exposed-jdbc`: JDBC support
+  - Custom Kotlin JDBC extensions for type-safe database interactions
   - `io.trino:trino-jdbc`: Trino JDBC driver
+  - Repository pattern for database access:
+    - Create FlightRepository class with ConnectionPool dependency
+    - Implement getRecentFlights method with filtering options (time range, status, altitude)
+    - Implement getFlightCountByRegion method for aggregated statistics
+    - Use JDBC extensions for type-safe queries
+    - Handle connection management with connection pool
 
 - **Endpoints**:
   - `/flights/sse`: SSE endpoint for raw flight data
   - `/processed_flights/sse`: SSE endpoint for processed flight data
   - `/flights`: REST endpoint for querying Iceberg via Trino
+    - Implement REST endpoints with query parameter support:
+      - GET /flights: Retrieve recent flights with filtering options
+      - GET /flights/regions: Get aggregated flight counts by region
+    - Support parameters for time range, limits, status, and altitude filtering
+    - Return JSON responses using Kotlin serialization
 
 ### 5.6 Frontend
 
@@ -238,13 +255,48 @@ The application will use synthetic flight data simulating FlightAware AeroAPI ou
   - Real-time updates via SSE
   - Data fetching via REST API
 
+- **Implementation Components**:
+  - **Data Models**:
+    - Flight: Raw flight data (flightId, latitude, longitude, altitude, status, timestamp)
+    - ProcessedFlight: Aggregated flight data (region, flightCount, avgAltitude, timestamp)
+    - RegionCount: Region-based statistics (region, count, avgAltitude)
+
+  - **SSE Client for Use Case 1**:
+    - EventSource for SSE connection
+    - StateFlow for reactive state management
+    - Error handling and reconnection logic
+    - Flight data processing and deduplication
+
+  - **REST Client for Use Case 3**:
+    - Fetch API for REST calls
+    - Polling mechanism for periodic updates
+    - Error handling and state management
+
+  - **Map Visualization with Lets-Plot**:
+    - Real-time map updates using StateFlow
+    - Point-based visualization of flight positions
+    - Color coding based on flight status
+    - Configuration of plot appearance and size
+
+  - **Bar Chart for Flight Status Distribution**:
+    - Aggregation of flight status data
+    - Bar chart visualization with Lets-Plot
+    - Dynamic updates based on incoming data
+
+  - **Main Application**:
+    - Initialization of Lets-Plot
+    - Creation and connection of data clients
+    - Setup of visualizations with data flows
+    - DOM manipulation for rendering plots
+    - Coroutine-based asynchronous processing
+
 ## 6. Testing Strategy
 
 ### 6.1 Unit Testing
 
 - **Backend**:
   - Test Ktor routes with `io.ktor:ktor-server-test-host`
-  - Test Exposed queries with in-memory H2 database
+  - Test Kotlin JDBC extensions with in-memory H2 database
   - Test Kafka consumers with embedded Kafka
 
 - **Flink Jobs**:

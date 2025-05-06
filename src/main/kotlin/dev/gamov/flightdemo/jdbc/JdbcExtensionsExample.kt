@@ -1,0 +1,231 @@
+package dev.gamov.flightdemo.jdbc
+
+import java.sql.Connection
+import java.time.LocalDateTime
+
+/**
+ * This file demonstrates how to use the JDBC extension functions in a real application.
+ * It shows examples of table definitions, queries, and database operations.
+ */
+
+// Define a table for flight data
+object FlightTable : Table("flight_data") {
+    val flightId = varchar("flight_id", 50)
+    val latitude = double("latitude")
+    val longitude = double("longitude")
+    val altitude = integer("altitude")
+    val status = varchar("status", 20)
+    val timestamp = datetime("timestamp")
+    
+    // Define primary key
+    init {
+        primaryKey(flightId)
+    }
+}
+
+// Define a data class to represent a flight
+data class Flight(
+    val flightId: String,
+    val latitude: Double,
+    val longitude: Double,
+    val altitude: Int,
+    val status: String,
+    val timestamp: LocalDateTime
+)
+
+// Extension function to convert ResultSet to Flight object
+fun ResultSet.toFlight(): Flight = Flight(
+    flightId = getString("flight_id"),
+    latitude = getDouble("latitude"),
+    longitude = getDouble("longitude"),
+    altitude = getInt("altitude"),
+    status = getString("status"),
+    timestamp = getTimestamp("timestamp").toLocalDateTime()
+)
+
+// Alternative using the type-safe get extension
+fun ResultSet.toFlightTypeSafe(): Flight = Flight(
+    flightId = get<String>("flight_id")!!,
+    latitude = get<Double>("latitude")!!,
+    longitude = get<Double>("longitude")!!,
+    altitude = get<Int>("altitude")!!,
+    status = get<String>("status")!!,
+    timestamp = get<LocalDateTime>("timestamp")!!
+)
+
+// Example repository class for flight data
+class FlightRepository(private val connectionPool: ConnectionPool) {
+    
+    // Create the flight table if it doesn't exist
+    fun createTable() {
+        connectionPool.withConnection { conn ->
+            FlightTable.create(conn)
+        }
+    }
+    
+    // Insert a new flight
+    fun insertFlight(flight: Flight): Long? {
+        return connectionPool.withConnection { conn ->
+            FlightTable.insert(conn, mapOf(
+                FlightTable.flightId to flight.flightId,
+                FlightTable.latitude to flight.latitude,
+                FlightTable.longitude to flight.longitude,
+                FlightTable.altitude to flight.altitude,
+                FlightTable.status to flight.status,
+                FlightTable.timestamp to flight.timestamp
+            ))
+        }
+    }
+    
+    // Get a flight by ID
+    fun getFlightById(id: String): Flight? {
+        return connectionPool.withConnection { conn ->
+            FlightTable.select { query ->
+                query.where(FlightTable.flightId eq id)
+            }.executeSingleQuery(conn) { rs ->
+                rs.toFlight()
+            }
+        }
+    }
+    
+    // Get all flights with altitude above a certain value
+    fun getHighAltitudeFlights(minAltitude: Int): List<Flight> {
+        return connectionPool.withConnection { conn ->
+            FlightTable.select { query ->
+                query.where(FlightTable.altitude greater minAltitude)
+                    .orderBy(FlightTable.timestamp, SortOrder.DESC)
+            }.executeQuery(conn) { rs ->
+                rs.toFlight()
+            }
+        }
+    }
+    
+    // Get flights in a specific region (using latitude and longitude)
+    fun getFlightsInRegion(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): List<Flight> {
+        return connectionPool.withConnection { conn ->
+            FlightTable.select { query ->
+                query.where(
+                    (FlightTable.latitude greaterEq minLat) and
+                    (FlightTable.latitude lessEq maxLat) and
+                    (FlightTable.longitude greaterEq minLon) and
+                    (FlightTable.longitude lessEq maxLon)
+                )
+            }.executeQuery(conn) { rs ->
+                rs.toFlight()
+            }
+        }
+    }
+    
+    // Update flight status
+    fun updateFlightStatus(flightId: String, newStatus: String): Int {
+        return connectionPool.withConnection { conn ->
+            FlightTable.update(
+                conn,
+                values = mapOf(FlightTable.status to newStatus),
+                condition = FlightTable.flightId eq flightId
+            )
+        }
+    }
+    
+    // Delete a flight
+    fun deleteFlight(flightId: String): Int {
+        return connectionPool.withConnection { conn ->
+            FlightTable.delete(conn, FlightTable.flightId eq flightId)
+        }
+    }
+    
+    // Count flights with a specific status
+    fun countFlightsByStatus(status: String): Long {
+        return connectionPool.withConnection { conn ->
+            FlightTable.select { query ->
+                query.where(FlightTable.status eq status)
+            }.count(conn)
+        }
+    }
+    
+    // Example of a more complex query using raw SQL
+    fun getRecentFlightsWithRawSql(minutes: Int, limit: Int): List<Flight> {
+        val sql = """
+            SELECT * FROM flight_data 
+            WHERE timestamp > ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        """.trimIndent()
+        
+        val timestamp = LocalDateTime.now().minusMinutes(minutes.toLong())
+        
+        return connectionPool.withConnection { conn ->
+            conn.queryList(sql, timestamp, limit) { rs ->
+                rs.toFlight()
+            }
+        }
+    }
+    
+    // Example of a transaction
+    fun updateMultipleFlights(updates: Map<String, String>): Int {
+        return connectionPool.transaction { conn ->
+            var totalUpdated = 0
+            
+            for ((flightId, newStatus) in updates) {
+                val updated = FlightTable.update(
+                    conn,
+                    values = mapOf(FlightTable.status to newStatus),
+                    condition = FlightTable.flightId eq flightId
+                )
+                totalUpdated += updated
+            }
+            
+            totalUpdated
+        }
+    }
+}
+
+// Example of how to use the FlightRepository
+fun main() {
+    // Create a connection pool
+    val connectionPool = ConnectionPool(
+        url = "jdbc:postgresql://localhost:5432/flightdb",
+        username = "postgres",
+        password = "password"
+    )
+    
+    try {
+        val flightRepository = FlightRepository(connectionPool)
+        
+        // Create the table
+        flightRepository.createTable()
+        
+        // Insert a flight
+        val flight = Flight(
+            flightId = "FL123",
+            latitude = 40.7128,
+            longitude = -74.0060,
+            altitude = 35000,
+            status = "ON_TIME",
+            timestamp = LocalDateTime.now()
+        )
+        flightRepository.insertFlight(flight)
+        
+        // Query flights
+        val highAltitudeFlights = flightRepository.getHighAltitudeFlights(30000)
+        println("High altitude flights: ${highAltitudeFlights.size}")
+        
+        // Update a flight
+        flightRepository.updateFlightStatus("FL123", "DELAYED")
+        
+        // Get a flight by ID
+        val updatedFlight = flightRepository.getFlightById("FL123")
+        println("Updated flight status: ${updatedFlight?.status}")
+        
+        // Count flights by status
+        val delayedCount = flightRepository.countFlightsByStatus("DELAYED")
+        println("Delayed flights: $delayedCount")
+        
+        // Delete a flight
+        flightRepository.deleteFlight("FL123")
+        
+    } finally {
+        // Close the connection pool
+        connectionPool.close()
+    }
+}

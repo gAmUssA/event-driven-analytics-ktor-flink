@@ -27,20 +27,20 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-This Product Requirements Document (PRD) outlines the requirements for a demo application showcasing real-time flight tracking using Apache Flink, Kotlin, Ktor, and open-source visualization libraries. The demo targets Kotlin developers and streaming data engineers, demonstrating three distinct use cases leveraging the FlightAware AeroAPI, Kafka with Avro format, and interactive visualizations. This updated version specifies that Flink jobs use only the Table API and SQL, and Ktor uses JetBrains Exposed for database interactions where applicable.
+This Product Requirements Document (PRD) outlines the requirements for a demo application showcasing real-time flight tracking using Apache Flink, Kotlin, Ktor, and open-source visualization libraries. The demo targets Kotlin developers and streaming data engineers, demonstrating three distinct use cases leveraging the FlightAware AeroAPI, Kafka with Avro format, and interactive visualizations. This updated version specifies that Flink jobs use only the Table API and SQL, and Ktor uses custom Kotlin JDBC extensions for database interactions where applicable.
 
 ### 1.2 Scope
 The demo includes three use cases:
 
 - **Ktor Consuming Kafka with SSE**: Ktor consumes flight data from Kafka and streams it to a frontend via Server-Sent Events (SSE) for visualization.
 - **Ktor Consuming Flink-Processed Kafka Data with SSE**: Ktor consumes processed flight data from Flink via Kafka and streams it to a frontend via SSE for visualization.
-- **Flink to Iceberg with Ktor REST and Trino**: Flink processes flight data from Kafka using stateless and stateful Table API/SQL queries, saves results to an Iceberg table, and Ktor provides a REST endpoint using Exposed to query the Iceberg table via Trino for frontend visualization.
+- **Flink to Iceberg with Ktor REST and Trino**: Flink processes flight data from Kafka using stateless and stateful Table API/SQL queries, saves results to an Iceberg table, and Ktor provides a REST endpoint using Kotlin JDBC extensions to query the Iceberg table via Trino for frontend visualization.
 
 The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, processed in Avro format via Kafka, and visualized using Lets-Plot.
 
 ### 1.3 Audience
 
-- **Kotlin Developers**: Interested in full-stack Kotlin applications using Ktor, Exposed, and Kotlin/JS.
+- **Kotlin Developers**: Interested in full-stack Kotlin applications using Ktor, Kotlin JDBC extensions, and Kotlin/JS.
 - **Streaming Data Engineers**: Focused on real-time data processing with Flink's Table API/SQL, Kafka, and data lakes like Iceberg.
 
 ## 2. Use Cases
@@ -129,8 +129,8 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 
 - **Backend**:
   - Trino server with Iceberg catalog for querying flight_data table.
-  - Ktor server uses JetBrains Exposed framework to connect to Trino via JDBC driver.
-  - Ktor provides REST endpoint (/flights) for querying recent flight data (e.g., last 10 minutes) using Exposed's DSL for SQL queries.
+  - Ktor server uses Kotlin JDBC extensions to connect to Trino via JDBC driver.
+  - Ktor provides REST endpoint (/flights) for querying recent flight data (e.g., last 10 minutes) using the fluent query builder API for SQL queries.
   - Optional query parameters for filtering (e.g., status, region, altitude).
 
 - **Frontend**:
@@ -148,7 +148,7 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 **Success Criteria**:
 
 - Frontend displays accurate, near-real-time flight data from Iceberg, reflecting both stateless and stateful query results.
-- REST endpoint provides flexible querying using Exposed with fast response times.
+- REST endpoint provides flexible querying using Kotlin JDBC extensions with fast response times.
 - Demo clearly showcases Flink Table API/SQL for stateless and stateful use cases.
 
 ## 3. Technical Requirements
@@ -160,13 +160,13 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 - **Stream Processing**: Apache Flink with Kotlin and Table API/SQL for processing Kafka data.
 - **Data Lake**: Apache Iceberg for persistent storage (Use Case 3).
 - **Query Engine**: Trino with JDBC driver for Iceberg queries (Use Case 3).
-- **Backend**: Ktor with JetBrains Exposed for database interactions via Trino JDBC.
+- **Backend**: Ktor with Kotlin JDBC extensions for database interactions via Trino JDBC.
 - **Frontend**: Kotlin/JS with Lets-Plot for map and chart visualizations.
 - **Dependencies**:
   - flink-kotlin for idiomatic Flink APIs.
   - kafka-avro-serializer for Avro serialization.
   - ktor-server-netty for Ktor server.
-  - org.jetbrains.exposed:exposed-core and org.jetbrains.exposed:exposed-jdbc for database interactions.
+  - Custom Kotlin JDBC extensions for type-safe database interactions.
   - lets-plot-kotlin for visualizations.
   - flink-sql-connector-kafka and flink-sql-connector-iceberg for Flink SQL.
 
@@ -204,7 +204,7 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 - **Reliability**:
   - Flink checkpointing for fault tolerance in stateful queries.
   - Kafka consumer retries for transient failures.
-  - Exposed handles database connection pooling for reliable Trino queries.
+  - Kotlin JDBC extensions handle connection pooling for reliable Trino queries.
 
 - **Deployment: Ascertainability**:
   - Local deployment for demo (Flink, Kafka, Trino, Ktor, browser).
@@ -242,26 +242,26 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 - **FlightAware AeroAPI**: Simulated data due to API key and rate limits.
 - **Visualization**: Lets-Plot's map support is basic; advanced features may require Leaflet.js integration.
 - **Local Deployment**: Demo runs locally, not in a production cloud environment.
-- **Exposed with Trino**: Exposed's JDBC support must be compatible with Trino's query capabilities for Iceberg.
+- **JDBC Extensions with Trino**: Kotlin JDBC extensions must be compatible with Trino's query capabilities for Iceberg.
 
 ### 5.2 Assumptions
 
 - Kafka, Flink, Trino, and Iceberg are pre-installed and configured.
 - Users have basic familiarity with Kotlin and streaming concepts.
 - Frontend runs in a modern browser (Chrome, Firefox).
-- Exposed can effectively query Iceberg tables via Trino JDBC.
+- Kotlin JDBC extensions can effectively query Iceberg tables via Trino JDBC.
 
 ## 6. Success Metrics
 
 - **Technical**:
   - All use cases process and visualize data with < 15-second end-to-end latency.
   - Use Case 3 demonstrates both stateless and stateful Flink Table API/SQL queries effectively.
-  - Ktor with Exposed provides reliable and performant database queries.
+  - Ktor with Kotlin JDBC extensions provides reliable and performant database queries.
   - Visualizations update smoothly without noticeable lag.
 
 - **Audience Engagement**:
   - Kotlin developers can replicate the demo using provided code.
-  - Streaming data engineers recognize Flink's Table API/SQL and Exposed's capabilities for diverse use cases.
+  - Streaming data engineers recognize Flink's Table API/SQL and Kotlin JDBC extensions' capabilities for diverse use cases.
 
 - **Demo Quality**:
   - Frontend is visually appealing and interactive.
@@ -278,8 +278,8 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 - **Risk**: Simulated data lacks realism compared to FlightAware API.
   - **Mitigation**: Ensure synthetic data mimics real flight patterns.
 
-- **Risk**: Exposed's compatibility with Trino JDBC may have limitations.
-  - **Mitigation**: Test Exposed thoroughly with Trino queries; fallback to raw JDBC if needed.
+- **Risk**: Kotlin JDBC extensions' compatibility with Trino JDBC may have limitations.
+  - **Mitigation**: Test Kotlin JDBC extensions thoroughly with Trino queries; optimize for Trino-specific features if needed.
 
 - **Risk**: Stateful query performance may degrade with large windows.
   - **Mitigation**: Optimize window size and use Flink's state management features.
@@ -290,7 +290,7 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 - Add advanced analytics (e.g., flight path prediction) in Flink Table API/SQL.
 - Enhance visualizations with animated flight paths or 3D views.
 - Deploy demo to a cloud environment for scalability testing.
-- Explore Exposed's advanced features for more complex Trino queries.
+- Enhance Kotlin JDBC extensions with additional features for more complex Trino queries.
 
 ## 9. References
 
@@ -300,6 +300,6 @@ The demo uses synthetic flight data simulating FlightAware AeroAPI outputs, proc
 - Apache Iceberg Documentation: https://iceberg.apache.org/
 - Trino Documentation: https://trino.io/
 - Ktor Documentation: https://ktor.io/
-- JetBrains Exposed GitHub: https://github.com/JetBrains/Exposed
+- Kotlin JDBC Extensions: Custom type-safe JDBC extensions for Kotlin
 - Lets-Plot Kotlin GitHub: https://github.com/JetBrains/lets-plot-kotlin
 - Confluent Schema Registry: https://docs.confluent.io/platform/current/schema-registry/index.html
