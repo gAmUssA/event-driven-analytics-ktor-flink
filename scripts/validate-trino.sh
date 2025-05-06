@@ -30,7 +30,7 @@ RETRY_INTERVAL=5
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker exec -it trino-coordinator trino --execute "SELECT 1" > /dev/null 2>&1; then
+    if docker exec trino-coordinator trino --no-progress --execute "SELECT 1" > /dev/null 2>/dev/null; then
         echo -e "${GREEN}${CHECK} Trino is ready.${NC}"
         break
     else
@@ -47,7 +47,7 @@ fi
 
 # Check if Iceberg catalog is available
 echo -e "${YELLOW}${INFO} Checking if Iceberg catalog is available...${NC}"
-CATALOGS=$(docker exec -it trino-coordinator trino --execute "SHOW CATALOGS")
+CATALOGS=$(docker exec trino-coordinator trino --no-progress --execute "SHOW CATALOGS" 2>/dev/null)
 
 if echo "$CATALOGS" | grep -q "iceberg"; then
     echo -e "${GREEN}${CHECK} Iceberg catalog is available.${NC}"
@@ -58,22 +58,35 @@ else
     exit 1
 fi
 
+# Create the test namespace first
+echo -e "${YELLOW}${INFO} Creating test namespace in Iceberg...${NC}"
+CREATE_RESULT=$(docker exec trino-coordinator trino --no-progress --execute "CREATE SCHEMA IF NOT EXISTS iceberg.test" 2>/dev/null)
+
+# Wait for namespace creation to propagate
+echo -e "${YELLOW}${INFO} Waiting for namespace creation to complete...${NC}"
+sleep 5
+
 # Try to create a test table and insert data
 echo -e "${YELLOW}${INFO} Testing Iceberg catalog functionality...${NC}"
 
-# Create a test schema if it doesn't exist
-docker exec -it trino-coordinator trino --execute "CREATE SCHEMA IF NOT EXISTS iceberg.test"
-
 # List schemas in the Iceberg catalog
-RESULT=$(docker exec -it trino-coordinator trino --execute "SHOW SCHEMAS FROM iceberg")
+RESULT=$(docker exec trino-coordinator trino --no-progress --execute "SHOW SCHEMAS FROM iceberg" 2>/dev/null)
 
-if echo "$RESULT" | grep -q "information_schema"; then
-    echo -e "${GREEN}${CHECK} Successfully connected to Iceberg catalog and listed schemas.${NC}"
+if echo "$RESULT" | grep -q "test"; then
+    echo -e "${GREEN}${CHECK} Successfully connected to Iceberg catalog and found test schema.${NC}"
 else
-    echo -e "${RED}${ERROR} Failed to list schemas from Iceberg catalog.${NC}"
-    echo -e "${YELLOW}${INFO} Query result:${NC}"
-    echo "$RESULT"
-    exit 1
+    echo -e "${YELLOW}${WARNING} Test schema not found yet. Waiting and retrying...${NC}"
+    sleep 10
+    RESULT=$(docker exec trino-coordinator trino --no-progress --execute "SHOW SCHEMAS FROM iceberg" 2>/dev/null)
+    
+    if echo "$RESULT" | grep -q "test"; then
+        echo -e "${GREEN}${CHECK} Successfully connected to Iceberg catalog and found test schema.${NC}"
+    else
+        echo -e "${RED}${ERROR} Failed to create test schema in Iceberg catalog.${NC}"
+        echo -e "${YELLOW}${INFO} Available schemas:${NC}"
+        echo "$RESULT"
+        exit 1
+    fi
 fi
 
 echo -e "${GREEN}${CHECK} Trino validation completed successfully!${NC}"

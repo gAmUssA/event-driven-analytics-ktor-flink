@@ -38,7 +38,7 @@ jobs:
           elapsed=0
           interval=10
 
-          until docker compose exec -T kafka kafka-topics --bootstrap-server kafka:9092 --list > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+          until docker compose exec kafka kafka-topics --bootstrap-server kafka:9092 --list > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
             echo "Kafka not ready yet, waiting... ($elapsed/$timeout seconds)"
             sleep $interval
             elapsed=$((elapsed + interval))
@@ -59,7 +59,7 @@ jobs:
           elapsed=0
           interval=10
 
-          until docker compose exec -T trino-coordinator trino --execute "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+          until docker compose exec trino-coordinator trino --no-progress --execute "SELECT 1" > /dev/null 2>/dev/null || [ $elapsed -ge $timeout ]; do
             echo "Trino not ready yet, waiting... ($elapsed/$timeout seconds)"
             sleep $interval
             elapsed=$((elapsed + interval))
@@ -72,6 +72,27 @@ jobs:
           fi
 
           echo "Trino is ready!"
+          
+      - name: Wait for REST Catalog to be ready
+        run: |
+          echo "Waiting for REST Catalog to be ready..."
+          timeout=180
+          elapsed=0
+          interval=10
+
+          until docker compose exec trino-coordinator curl -s http://rest-catalog:8181/v1/config > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+            echo "REST Catalog not ready yet, waiting... ($elapsed/$timeout seconds)"
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+
+          if [ $elapsed -ge $timeout ]; then
+            echo "Timeout waiting for REST Catalog to be ready"
+            docker compose logs rest-catalog
+            exit 1
+          fi
+
+          echo "REST Catalog is ready!"
 
       - name: Check service status
         run: docker compose ps
@@ -82,7 +103,7 @@ jobs:
           ./scripts/validate-trino.sh
 
       - name: Check Kafka topics
-        run: docker compose exec -T kafka kafka-topics --bootstrap-server kafka:9092 --list
+        run: docker compose exec kafka kafka-topics --bootstrap-server kafka:9092 --list
 
       - name: Stop services
         if: always()
