@@ -207,6 +207,7 @@ services:
   # Trino coordinator
   trino-coordinator:
     image: trinodb/trino:414
+    platform: linux/amd64
     container_name: trino-coordinator
     depends_on:
       - rest-catalog

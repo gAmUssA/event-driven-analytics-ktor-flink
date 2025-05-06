@@ -18,6 +18,12 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Initialize Kafka for KRaft mode
         run: |
           docker compose up --exit-code-from kafka-init kafka-init
