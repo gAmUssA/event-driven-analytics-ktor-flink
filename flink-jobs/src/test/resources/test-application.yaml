@@ -1,0 +1,32 @@
+kafka:
+  bootstrapServers: ${KAFKA_BOOTSTRAP_SERVERS}
+  schemaRegistryUrl: ${SCHEMA_REGISTRY_URL}
+  groupId: test-consumer-group
+  autoOffsetReset: earliest
+  topics:
+    flights: test-flights
+    processedFlights: test-processed-flights
+
+flink:
+  checkpointing:
+    interval: 5000
+    timeout: 60000
+    minPause: 1000
+    maxConcurrent: 1
+  state:
+    backend: memory
+    dir: /tmp/flink-checkpoints
+
+iceberg:
+  catalog:
+    name: iceberg_catalog
+    type: rest
+    uri: http://rest-catalog:8181
+    warehouse: s3a://warehouse/wh
+  tables:
+    flightData:
+      name: flight_data
+      partitioning: days(timestamp)
+    flightAggregates:
+      name: flight_aggregates
+      partitioning: days(window_start)
