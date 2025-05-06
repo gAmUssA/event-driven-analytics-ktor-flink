@@ -23,6 +23,7 @@ This document contains a detailed task list for implementing the Real-Time Fligh
 - [x] 1.3.4 Configure Trino with Iceberg connector
 - [x] 1.3.5 Test Trino-Iceberg connectivity
 - [x] 1.3.6 Create validation script for Trino
+- [x] 1.3.7 Fix Trino validation issues
 
 ### 1.4 Docker Compose
 - [x] 1.4.1 Create Docker Compose configuration for all services

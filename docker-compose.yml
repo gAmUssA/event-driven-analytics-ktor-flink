@@ -50,7 +50,7 @@ services:
       - kafka-data:/var/lib/kafka/data
       - ./scripts/kafka.properties:/etc/kafka/kraft/server.properties
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -68,7 +68,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/subjects" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -108,7 +108,6 @@ services:
   # Flink JobManager
   jobmanager:
     image: apache/flink:2.0.0
-    platform: linux/amd64
     container_name: jobmanager
     ports:
       - "8082:8081"
@@ -127,7 +126,7 @@ services:
       - flink-checkpoints:/opt/flink/checkpoints
       - flink-savepoints:/opt/flink/savepoints
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/overview" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -135,7 +134,6 @@ services:
   # Flink TaskManager
   taskmanager:
     image: apache/flink:2.0.0
-    platform: linux/amd64
     container_name: taskmanager
     depends_on:
       - jobmanager
@@ -165,7 +163,7 @@ services:
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -201,15 +199,14 @@ services:
     depends_on:
       - minio
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8181/v1/config"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8181/v1/config" ]
       interval: 30s
       timeout: 10s
       retries: 5
 
   # Trino coordinator
   trino-coordinator:
-    image: trinodb/trino:475
-    platform: linux/amd64
+    image: trinodb/trino:414
     container_name: trino-coordinator
     depends_on:
       - rest-catalog
@@ -221,7 +218,7 @@ services:
     volumes:
       - ./trino/etc:/etc/trino
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/info"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/v1/info" ]
       interval: 30s
       timeout: 10s
       retries: 5
