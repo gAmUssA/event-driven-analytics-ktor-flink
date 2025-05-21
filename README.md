@@ -174,6 +174,94 @@ Dependency management is automated using Renovate, which creates pull requests t
 - Grouped dependencies by type (Flink, Kafka, Ktor, Kotlin)
 - Automatically merges non-major updates
 
+## 🔌 Running and Testing the Ktor Backend
+
+The Ktor backend provides both Server-Sent Events (SSE) and REST endpoints for accessing flight data.
+
+### Running the Ktor Backend
+
+You can run the Ktor backend in several ways:
+
+1. **Using Gradle**:
+   ```bash
+   ./gradlew :ktor-backend:run
+   ```
+
+2. **Using Docker Compose** (recommended for full stack):
+   ```bash
+   make start
+   ```
+
+3. **Using the JAR file**:
+   ```bash
+   ./gradlew :ktor-backend:build
+   java -jar ktor-backend/build/libs/ktor-backend-0.1.0-SNAPSHOT.jar
+   ```
+
+### Configuration
+
+The Ktor backend can be configured using environment variables:
+
+- `PORT`: HTTP port (default: 8080)
+- `HOST`: Host address (default: 0.0.0.0)
+- `KAFKA_BOOTSTRAP_SERVERS`: Kafka bootstrap servers (default: localhost:9092)
+- `SCHEMA_REGISTRY_URL`: Schema Registry URL (default: http://localhost:8081)
+- `TRINO_JDBC_URL`: Trino JDBC URL (default: jdbc:trino://localhost:8083)
+- `TRINO_USERNAME`: Trino username (default: trino)
+- `TRINO_PASSWORD`: Trino password (default: empty)
+- `TRINO_CATALOG`: Trino catalog (default: iceberg)
+- `TRINO_SCHEMA`: Trino schema (default: flight_data)
+
+### Available Endpoints
+
+#### SSE Endpoints
+
+- `GET /flights/sse`: Streams raw flight data from Kafka
+  - Returns a stream of flight data events in JSON format
+  - Example: `curl -N http://localhost:8080/flights/sse`
+
+- `GET /processed_flights/sse`: Streams processed flight data from Kafka
+  - Returns a stream of processed flight data events in JSON format
+  - Example: `curl -N http://localhost:8080/processed_flights/sse`
+
+#### REST Endpoints
+
+- `GET /flights`: Returns a list of recent flights
+  - Query parameters:
+    - `limit`: Maximum number of flights to return (default: 10)
+    - `minAltitude`: Minimum altitude in feet
+    - `status`: Flight status (ON_TIME, DELAYED, CANCELLED, DIVERTED)
+    - `timeRange`: Time range in minutes (default: 10)
+  - Example: `curl http://localhost:8080/flights?limit=5&minAltitude=35000&status=ON_TIME`
+
+- `GET /flights/regions`: Returns statistics about flight counts by region
+  - Query parameters:
+    - `timeRange`: Time range in minutes (default: 10)
+  - Example: `curl http://localhost:8080/flights/regions?timeRange=30`
+
+### Testing the Ktor Backend
+
+You can test the Ktor backend using tools like curl, Postman, or a web browser:
+
+1. **Testing SSE endpoints with curl**:
+   ```bash
+   curl -N http://localhost:8080/flights/sse
+   ```
+
+2. **Testing REST endpoints with curl**:
+   ```bash
+   curl http://localhost:8080/flights
+   curl http://localhost:8080/flights/regions
+   ```
+
+3. **Testing with Postman**:
+   - Import the following collection: [Flight Tracking API.postman_collection.json](https://github.com/gamussa/event-driven-analytics-ktor-flink/blob/main/postman/Flight%20Tracking%20API.postman_collection.json)
+   - Or create your own requests to the endpoints listed above
+
+4. **Testing with a web browser**:
+   - For SSE: Use the EventSource API in JavaScript
+   - For REST: Simply navigate to http://localhost:8080/flights or http://localhost:8080/flights/regions
+
 ## 📚 Documentation
 
 For more detailed information, see:

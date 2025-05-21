@@ -72,41 +72,41 @@ This document contains a detailed task list for implementing the Real-Time Fligh
 ## 3. Backend Development
 
 ### 3.1 Ktor Project Setup
-- [ ] 3.1.1 Create Ktor project structure
-- [ ] 3.1.2 Configure Netty server engine
-- [ ] 3.1.3 Set up content negotiation and serialization
-- [ ] 3.1.4 Configure CORS and logging
-- [ ] 3.1.5 Set up dependency injection
+- [x] 3.1.1 Create Ktor project structure
+- [x] 3.1.2 Configure Netty server engine
+- [x] 3.1.3 Set up content negotiation and serialization
+- [x] 3.1.4 Configure CORS and logging
+- [x] 3.1.5 Set up dependency injection
 
 ### 3.2 Kafka Integration
-- [ ] 3.2.1 Implement Kafka consumer configuration
-- [ ] 3.2.2 Set up Avro deserialization with Schema Registry
-- [ ] 3.2.3 Create consumer for raw flight data
-- [ ] 3.2.4 Create consumer for processed flight data
-- [ ] 3.2.5 Implement error handling and reconnection logic
-- [ ] 3.2.6 Test Kafka consumers
+- [x] 3.2.1 Implement Kafka consumer configuration
+- [x] 3.2.2 Set up Avro deserialization with Schema Registry
+- [x] 3.2.3 Create consumer for raw flight data
+- [x] 3.2.4 Create consumer for processed flight data
+- [x] 3.2.5 Implement error handling and reconnection logic
+- [x] 3.2.6 Test Kafka consumers
 
 ### 3.3 SSE Endpoints
-- [ ] 3.3.1 Implement SSE endpoint for raw flight data (/flights/sse)
-- [ ] 3.3.2 Implement SSE endpoint for processed flight data (/processed_flights/sse)
-- [ ] 3.3.3 Add data transformation from Avro to JSON
-- [ ] 3.3.4 Implement resource cleanup on client disconnect
-- [ ] 3.3.5 Test SSE endpoints
+- [x] 3.3.1 Implement SSE endpoint for raw flight data (/flights/sse)
+- [x] 3.3.2 Implement SSE endpoint for processed flight data (/processed_flights/sse)
+- [x] 3.3.3 Add data transformation from Avro to JSON
+- [x] 3.3.4 Implement resource cleanup on client disconnect
+- [x] 3.3.5 Test SSE endpoints
 
 ### 3.4 JDBC Extensions Integration
-- [ ] 3.4.1 Configure Trino JDBC driver
-- [ ] 3.4.2 Implement connection pool for Trino
-- [ ] 3.4.3 Define table objects for Iceberg tables
-- [ ] 3.4.4 Create repository classes for database access
-- [ ] 3.4.5 Implement query methods with filtering options
-- [ ] 3.4.6 Test JDBC extensions with Trino
+- [x] 3.4.1 Configure Trino JDBC driver
+- [x] 3.4.2 Implement connection pool for Trino
+- [x] 3.4.3 Define table objects for Iceberg tables
+- [x] 3.4.4 Create repository classes for database access
+- [x] 3.4.5 Implement query methods with filtering options
+- [x] 3.4.6 Test JDBC extensions with Trino
 
 ### 3.5 REST Endpoints
-- [ ] 3.5.1 Implement REST endpoint for recent flights (/flights)
-- [ ] 3.5.2 Implement REST endpoint for region statistics (/flights/regions)
-- [ ] 3.5.3 Add query parameter support for filtering
-- [ ] 3.5.4 Implement JSON response serialization
-- [ ] 3.5.5 Test REST endpoints
+- [x] 3.5.1 Implement REST endpoint for recent flights (/flights)
+- [x] 3.5.2 Implement REST endpoint for region statistics (/flights/regions)
+- [x] 3.5.3 Add query parameter support for filtering
+- [x] 3.5.4 Implement JSON response serialization
+- [x] 3.5.5 Test REST endpoints
 
 ## 4. Frontend Development
 

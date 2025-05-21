@@ -1,0 +1,93 @@
+{
+  "namespace": "dev.gamov.flightdemo.avro",
+  "type": "record",
+  "name": "ProcessedFlightData",
+  "doc": "Schema for processed flight data",
+  "fields": [
+    {
+      "name": "flightId",
+      "type": "string",
+      "doc": "Unique identifier for the flight"
+    },
+    {
+      "name": "callsign",
+      "type": "string",
+      "doc": "Flight callsign"
+    },
+    {
+      "name": "latitude",
+      "type": "double",
+      "doc": "Current latitude in degrees"
+    },
+    {
+      "name": "longitude",
+      "type": "double",
+      "doc": "Current longitude in degrees"
+    },
+    {
+      "name": "altitude",
+      "type": "int",
+      "doc": "Current altitude in feet"
+    },
+    {
+      "name": "heading",
+      "type": "double",
+      "doc": "Current heading in degrees (0-360)"
+    },
+    {
+      "name": "speed",
+      "type": "double",
+      "doc": "Current ground speed in knots"
+    },
+    {
+      "name": "verticalSpeed",
+      "type": "double",
+      "doc": "Current vertical speed in feet per minute"
+    },
+    {
+      "name": "origin",
+      "type": "string",
+      "doc": "Origin airport code"
+    },
+    {
+      "name": "destination",
+      "type": "string",
+      "doc": "Destination airport code"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "ProcessedFlightStatus",
+        "symbols": ["ON_TIME", "DELAYED", "CANCELLED", "DIVERTED"]
+      },
+      "doc": "Current flight status"
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Timestamp of the data point in milliseconds since epoch"
+    },
+    {
+      "name": "region",
+      "type": "string",
+      "doc": "Region identifier calculated from latitude and longitude"
+    },
+    {
+      "name": "isHighAltitude",
+      "type": "boolean",
+      "doc": "Flag indicating if the flight is at high altitude (above 35,000 feet)"
+    },
+    {
+      "name": "processingTimestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "Timestamp when the data was processed"
+    }
+  ]
+}
