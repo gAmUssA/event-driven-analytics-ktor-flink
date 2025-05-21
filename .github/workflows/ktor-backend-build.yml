@@ -46,7 +46,7 @@ jobs:
           echo "Waiting for Kafka and Schema Registry to be ready..."
           # Wait for Kafka to be ready
           COUNTER=0
-          while ! docker-compose exec -T kafka kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1 && [ $COUNTER -lt 60 ]; do
+          while ! docker-compose exec -T kafka kafka-topics --bootstrap-server localhost:29092 --list > /dev/null 2>&1 && [ $COUNTER -lt 60 ]; do
             sleep 2
             ((COUNTER++))
             echo "Waiting for Kafka... ($COUNTER/60)"
