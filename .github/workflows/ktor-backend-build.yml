@@ -37,15 +37,42 @@ jobs:
       - name: Build Shadow JAR
         run: ./gradlew ktor-backend:shadowJar
 
-      - name: Install netcat
-        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
+      - name: Install netcat and docker-compose
+        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd docker-compose
+
+      - name: Start Kafka, Schema Registry, and create topics
+        run: |
+          docker-compose up -d kafka-init kafka schema-registry
+          echo "Waiting for Kafka and Schema Registry to be ready..."
+          # Wait for Kafka to be ready
+          COUNTER=0
+          while ! docker-compose exec -T kafka kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1 && [ $COUNTER -lt 60 ]; do
+            sleep 2
+            ((COUNTER++))
+            echo "Waiting for Kafka... ($COUNTER/60)"
+          done
+
+          # Wait for Schema Registry to be ready
+          COUNTER=0
+          while ! curl -s http://localhost:8081/subjects > /dev/null 2>&1 && [ $COUNTER -lt 30 ]; do
+            sleep 2
+            ((COUNTER++))
+            echo "Waiting for Schema Registry... ($COUNTER/30)"
+          done
+
+          echo "Kafka and Schema Registry are ready!"
+
+          # Start kafka-setup to create topics
+          echo "Creating Kafka topics..."
+          docker-compose up -d kafka-setup
+          sleep 10  # Give some time for topics to be created
 
       - name: Verify application starts correctly
         env:
           PORT: 9080
           HOST: 0.0.0.0
           # Use mock or test configurations for CI environment
-          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          KAFKA_BOOTSTRAP_SERVERS: localhost:29092
           SCHEMA_REGISTRY_URL: http://localhost:8081
           TRINO_JDBC_URL: jdbc:trino://localhost:8083
           TRINO_USERNAME: trino
@@ -75,3 +102,10 @@ jobs:
         with:
           name: ktor-backend-jar
           path: ktor-backend/build/libs/ktor-backend-*.jar
+
+      - name: Stop Kafka and Schema Registry
+        if: always()
+        run: |
+          echo "Stopping Kafka and Schema Registry..."
+          docker-compose down
+          echo "Containers stopped."
