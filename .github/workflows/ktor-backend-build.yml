@@ -1,0 +1,77 @@
+name: Build and Test Ktor Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ktor-backend/**'
+      - '.github/workflows/ktor-backend-build.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ktor-backend/**'
+      - '.github/workflows/ktor-backend-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew ktor-backend:build
+
+      - name: Run tests
+        run: ./gradlew ktor-backend:test
+
+      - name: Build Shadow JAR
+        run: ./gradlew ktor-backend:shadowJar
+
+      - name: Install netcat
+        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
+
+      - name: Verify application starts correctly
+        env:
+          PORT: 9080
+          HOST: 0.0.0.0
+          # Use mock or test configurations for CI environment
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          SCHEMA_REGISTRY_URL: http://localhost:8081
+          TRINO_JDBC_URL: jdbc:trino://localhost:8083
+          TRINO_USERNAME: trino
+          TRINO_CATALOG: iceberg
+          TRINO_SCHEMA: flight_data
+        run: |
+          java -jar ktor-backend/build/libs/ktor-backend-0.1.0-SNAPSHOT.jar &
+          PID=$!
+          # Wait for the application to start (max 30 seconds)
+          COUNTER=0
+          while ! nc -z localhost 9080 && [ $COUNTER -lt 30 ]; do
+            sleep 1
+            ((COUNTER++))
+          done
+          # Check if the application is running
+          if nc -z localhost 9080; then
+            echo "Application started successfully"
+            kill $PID
+          else
+            echo "Application failed to start within 30 seconds"
+            kill $PID
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ktor-backend-jar
+          path: ktor-backend/build/libs/ktor-backend-*.jar

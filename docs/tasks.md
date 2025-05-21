@@ -210,3 +210,4 @@ This document contains a detailed task list for implementing the Real-Time Fligh
 - [x] 6.3.2 Configure Renovate for dependency management
 - [x] 6.3.3 Document CI/CD setup in README
 - [x] 6.3.4 Create GitHub Actions workflow for generator project
+- [x] 6.3.5 Create GitHub Actions workflow for Ktor backend project

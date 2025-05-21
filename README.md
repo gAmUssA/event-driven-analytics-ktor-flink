@@ -2,6 +2,7 @@
 
 [![Validate Stack](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/validate.yml/badge.svg)](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/validate.yml)
 [![Build Generator](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/generator-build.yml/badge.svg)](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/generator-build.yml)
+[![Build Ktor Backend](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/ktor-backend-build.yml/badge.svg)](https://github.com/gamussa/event-driven-analytics-ktor-flink/actions/workflows/ktor-backend-build.yml)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
 [![Kafka](https://img.shields.io/badge/Kafka-7.8.0-231F20?logo=apache-kafka)](https://kafka.apache.org/)
 [![Flink](https://img.shields.io/badge/Flink-1.20.1-E6526F?logo=apache-flink)](https://flink.apache.org/)
