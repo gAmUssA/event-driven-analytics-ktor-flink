@@ -57,7 +57,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.0.1")
 
     // Config
-    implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")
+    implementation("com.sksamuel.hoplite:hoplite-core:2.9.0")
     implementation("com.sksamuel.hoplite:hoplite-yaml:2.7.5")
 
     // Testing
