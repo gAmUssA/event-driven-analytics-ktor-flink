@@ -32,7 +32,7 @@ dependencies {
     implementation("org.apache.avro:avro:1.11.3")
 
     // Config
-    implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")
+    implementation("com.sksamuel.hoplite:hoplite-core:2.9.0")
     implementation("com.sksamuel.hoplite:hoplite-yaml:2.7.5")
 
     // Testing
