@@ -37,16 +37,27 @@ jobs:
       - name: Build Shadow JAR
         run: ./gradlew ktor-backend:shadowJar
 
-      - name: Install netcat and docker-compose
-        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd docker-compose
+      - name: Install netcat
+        run: sudo apt-get update && sudo apt-get install -y netcat-openbsd
+
+      - name: Setup Docker Compose
+        run: |
+          # Install Docker Compose v2
+          DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+          mkdir -p $DOCKER_CONFIG/cli-plugins
+          curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
+          chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+          docker compose version
 
       - name: Start Kafka, Schema Registry, and create topics
         run: |
-          docker-compose up -d kafka-init kafka schema-registry
+          # Start Kafka and Schema Registry
+          docker compose up -d kafka-init kafka schema-registry
           echo "Waiting for Kafka and Schema Registry to be ready..."
+          
           # Wait for Kafka to be ready
           COUNTER=0
-          while ! docker-compose exec -T kafka kafka-topics --bootstrap-server localhost:29092 --list > /dev/null 2>&1 && [ $COUNTER -lt 60 ]; do
+          while ! docker compose exec -T kafka kafka-topics --bootstrap-server localhost:29092 --list > /dev/null 2>&1 && [ $COUNTER -lt 60 ]; do
             sleep 2
             ((COUNTER++))
             echo "Waiting for Kafka... ($COUNTER/60)"
@@ -64,7 +75,7 @@ jobs:
 
           # Start kafka-setup to create topics
           echo "Creating Kafka topics..."
-          docker-compose up -d kafka-setup
+          docker compose up -d kafka-setup
           sleep 10  # Give some time for topics to be created
 
       - name: Verify application starts correctly
@@ -79,21 +90,28 @@ jobs:
           TRINO_CATALOG: iceberg
           TRINO_SCHEMA: flight_data
         run: |
+          echo "🚀 Starting Ktor application..."
           java -jar ktor-backend/build/libs/ktor-backend-0.1.0-SNAPSHOT.jar &
           PID=$!
+          
           # Wait for the application to start (max 30 seconds)
           COUNTER=0
+          echo "⏳ Waiting for application to start..."
           while ! nc -z localhost 9080 && [ $COUNTER -lt 30 ]; do
             sleep 1
             ((COUNTER++))
+            echo "⏳ Waiting for application... ($COUNTER/30)"
           done
+          
           # Check if the application is running
           if nc -z localhost 9080; then
-            echo "Application started successfully"
+            echo "✅ Application started successfully"
             kill $PID
+            wait $PID 2>/dev/null || true
           else
-            echo "Application failed to start within 30 seconds"
-            kill $PID
+            echo "❌ Application failed to start within 30 seconds"
+            kill $PID 2>/dev/null || true
+            wait $PID 2>/dev/null || true
             exit 1
           fi
 
@@ -106,6 +124,6 @@ jobs:
       - name: Stop Kafka and Schema Registry
         if: always()
         run: |
-          echo "Stopping Kafka and Schema Registry..."
-          docker-compose down
-          echo "Containers stopped."
+          echo "🛑 Stopping Kafka and Schema Registry..."
+          docker compose down
+          echo "✅ Containers stopped."

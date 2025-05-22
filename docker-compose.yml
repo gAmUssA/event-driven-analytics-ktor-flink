@@ -100,7 +100,13 @@ services:
     command: >
       bash -c "
         echo 'Waiting for Kafka to be ready...'
-        cub kafka-ready -b kafka:9092 1 30
+        # Wait for Kafka to be ready
+        COUNTER=0
+        while ! kafka-topics --bootstrap-server kafka:9092 --list > /dev/null 2>&1 && [ $COUNTER -lt 30 ]; do
+          sleep 2
+          ((COUNTER++))
+          echo \"Waiting for Kafka... ($COUNTER/30)\"
+        done
         echo 'Creating Kafka topics...'
         /scripts/create-topics.sh
       "
