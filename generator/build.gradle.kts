@@ -37,7 +37,7 @@ dependencies {
 
     // Config
     implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")
-    implementation("com.sksamuel.hoplite:hoplite-yaml:2.7.5")
+    implementation("com.sksamuel.hoplite:hoplite-yaml:2.9.0")
 
     // Testing
     testImplementation("org.jetbrains.kotlin:kotlin-test")
