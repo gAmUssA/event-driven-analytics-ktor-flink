@@ -42,7 +42,7 @@ dependencies {
 
     // Config
     implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")
-    implementation("com.sksamuel.hoplite:hoplite-yaml:2.7.5")
+    implementation("com.sksamuel.hoplite:hoplite-yaml:2.9.0")
 
     // Flink Core
     implementation("org.apache.flink:flink-streaming-java:$flinkVersion")
