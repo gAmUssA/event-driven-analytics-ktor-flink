@@ -37,7 +37,7 @@ dependencies {
     // Kafka
     implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
     implementation("io.confluent:kafka-avro-serializer:7.5.1")
-    implementation("io.confluent:kafka-schema-registry-client:7.5.1")
+    implementation("io.confluent:kafka-schema-registry-client:7.9.2")
     implementation("org.apache.avro:avro:1.11.3")
 
     // Config
